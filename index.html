@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmileyChart</title>
+    <style>
+        :root {
+            --primary-dark: #0d2b5a;
+            --primary: #1a3a6c;
+            --green: #4CAF50;
+            --green-dark: #45a049;
+            --red: #F44336;
+            --red-dark: #e53935;
+            --bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text: #2b2b2b;
+            --text-muted: #6b7280;
+            --border: #e3e7ee;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: var(--space-4);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 6px 20px rgba(13, 43, 90, 0.12);
+            overflow: hidden;
+        }
+
+        .banner {
+            width: 100%;
+            padding: var(--space-3) 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .banner-text {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: white;
+        }
+
+        .banner-emoji {
+            font-size: 26px;
+            margin: 0 var(--space-3);
+        }
+
+        .child-view-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .toolbar-btn-inverse {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .toolbar-btn-inverse:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Small "..." trigger in the corner of each child tab, opening the
+           shared Share Codes / Child View dropdown. */
+        .child-tab-menu-btn {
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            width: 15px;
+            height: 15px;
+            line-height: 13px;
+            padding: 0;
+            border: none;
+            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.25);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .child-tab:not(.active) .child-tab-menu-btn {
+            background-color: rgba(13, 43, 90, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .child-tab-menu {
+            display: none;
+            flex-direction: column;
+            position: fixed;
+            min-width: 170px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 6px 16px rgba(13, 43, 90, 0.2);
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .child-tab-menu.visible {
+            display: flex;
+        }
+
+        .child-tab-menu-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: var(--space-3);
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background-color: white;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .child-tab-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .child-tab-menu-item:hover {
+            background-color: #f0f4f8;
+        }
+
+        /* Read-only child view: hide every editing affordance */
+        body.child-view-mode .child-view-banner {
+            display: flex;
+        }
+
+        body.child-view-mode .child-tabs-row {
+            display: none;
+        }
+
+        body.child-view-mode .controls {
+            display: none;
+        }
+
+        body.child-view-mode .quick-notes {
+            display: none;
+        }
+
+        body.child-view-mode .prize-name {
+            cursor: default;
+        }
+
+        .code-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-row-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .code-row-code {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--primary-dark);
+            background-color: #f0f4f8;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .code-row-regen {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+            margin-left: var(--space-2);
+        }
+
+        .child-view-error {
+            color: var(--red);
+            font-size: 13px;
+            margin: -8px 0 var(--space-4);
+            display: none;
+        }
+
+        .modal-helper-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-3);
+        }
+
+        .chart-section {
+            padding: var(--space-4);
+        }
+
+        .child-tabs-row {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 0;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            border: 1px solid var(--primary);
+            border-bottom: none;
+            overflow: hidden;
+        }
+
+        .child-tabs {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .child-search-btn {
+            display: none;
+            flex: 0 0 40px;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-left: 1px solid var(--border);
+            background-color: #f0f4f8;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .child-search-btn.visible {
+            display: flex;
+        }
+
+        .child-search-btn:hover {
+            background-color: #e1e8f2;
+        }
+
+        .child-tab {
+            position: relative;
+            flex: 0 0 84px;
+            width: 84px;
+            padding: 6px var(--space-1);
+            text-align: center;
+            background-color: #f0f4f8;
+            border: none;
+            border-right: 1px solid var(--border);
+            cursor: pointer;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s ease;
+        }
+
+        .child-tab-add {
+            flex: 0 0 40px;
+            width: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .child-tab-add:hover {
+            background-color: #e1e8f2;
+        }
+
+        .child-tab:last-child {
+            border-right: none;
+        }
+
+        .child-tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .child-tab:not(.active):hover {
+            background-color: #e1e8f2;
+        }
+
+        .child-name-input {
+            /* Not directly interactive - clicks pass through to the tab button
+               below so the whole tab is clickable. Only enabled (pointer-events:
+               auto) while actively being renamed via double-click. */
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-dark);
+            width: 100%;
+            font-size: 14px;
+            outline: none;
+            padding: 2px 16px 2px 2px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .child-tab.active .child-name-input {
+            color: white;
+        }
+
+        .child-name-input:focus {
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+            border: 1px solid var(--primary);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            overflow: auto;
+        }
+
+        .chart-resize-handle {
+            width: 48px;
+            height: 14px;
+            margin: 2px auto var(--space-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: ns-resize;
+            touch-action: none;
+        }
+
+        .chart-resize-handle::before {
+            content: '';
+            width: 100%;
+            height: 4px;
+            background-color: var(--border);
+            border-radius: 2px;
+            transition: background-color 0.15s ease;
+        }
+
+        .chart-resize-handle:hover::before,
+        .chart-resize-handle.dragging::before {
+            background-color: var(--primary);
+        }
+
+        .chart-wrapper {
+            min-width: 100%;
+            position: relative;
+            background-image:
+                linear-gradient(90deg, rgba(173, 216, 230, 0.35) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(173, 216, 230, 0.35) 1px, transparent 1px),
+                linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            background-size: 32px 32px, 32px 32px, 100% 100%;
+            background-repeat: repeat, repeat, no-repeat;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sticky y-axis: stays pinned to the left edge of the scroll
+           container horizontally, while still scrolling normally
+           with the chart content vertically. */
+        .y-axis-sticky {
+            position: sticky;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .y-axis-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .y-axis-label {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            transform: translateY(-50%);
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .y-axis-label-zero {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-2);
+            gap: var(--space-3);
+        }
+
+        .btn {
+            padding: var(--space-2) var(--space-5);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-height: 32px;
+            gap: var(--space-2);
+        }
+
+        .btn-smiley {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(76, 175, 80, 0.35);
+        }
+
+        .btn-grumpy {
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(244, 67, 54, 0.35);
+        }
+
+        .btn-prize {
+            flex: 0 0 48px;
+            padding: var(--space-2);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(13, 43, 90, 0.35);
+        }
+
+        .btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-icon {
+            font-size: 18px;
+        }
+
+        .prizes-section {
+            padding: var(--space-2) var(--space-4) var(--space-4);
+            background-color: #fafbfc;
+            border-top: 1px solid var(--border);
+        }
+
+        .prize-item {
+            padding: var(--space-2) var(--space-3);
+            background-color: white;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(13, 43, 90, 0.06);
+        }
+
+        .prize-name {
+            flex: 0 0 auto;
+            max-width: 40%;
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .prize-name-editing {
+            flex: 0 0 auto;
+            max-width: 40%;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-sm);
+            padding: 1px 4px;
+        }
+
+        .prize-icon {
+            flex: 0 0 auto;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .btn-add {
+            background-color: var(--green);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(13, 43, 90, 0.45);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: var(--space-5);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 12px 32px rgba(13, 43, 90, 0.25);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: var(--space-4);
+            color: var(--primary-dark);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-4);
+            font-size: 16px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-3);
+        }
+
+        .value-stepper-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+
+        .value-stepper-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .value-stepper {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .value-stepper-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .value-stepper-btn:disabled {
+            background-color: #cfd8e3;
+            cursor: default;
+        }
+
+        .value-stepper-count {
+            min-width: 28px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .child-search-results {
+            max-height: 240px;
+            overflow-y: auto;
+            margin-bottom: var(--space-4);
+        }
+
+        .child-search-result {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: var(--space-3);
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background-color: white;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .child-search-result:hover {
+            background-color: #f0f4f8;
+        }
+
+        .child-search-result.active {
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        .child-search-empty {
+            padding: var(--space-3);
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .modal-btn {
+            padding: var(--space-3) var(--space-5);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .modal-btn-cancel {
+            background-color: #f0f2f5;
+            color: var(--text);
+        }
+
+        .modal-btn-save {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .prize-progress {
+            flex: 1;
+            min-width: 0;
+            height: 8px;
+            background-color: #eef1f5;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .prize-progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+        }
+
+        .prize-progress-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: rgba(0, 0, 0, 0.35);
+        }
+
+        .quick-notes {
+            margin-top: var(--space-2);
+        }
+
+        .quick-notes-title {
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .quick-notes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .quick-note {
+            background-color: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: var(--space-2) var(--space-3);
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .quick-note-edit-input {
+            border-radius: 16px;
+            padding: var(--space-2) var(--space-3);
+            font-size: 13px;
+            font-family: inherit;
+            border: 2px solid var(--primary);
+            outline: none;
+            text-align: center;
+        }
+
+        .quick-note:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+
+        .connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 8;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .chart-point {
+            cursor: pointer;
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            transition: transform 0.15s ease;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .chart-point:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            z-index: 11;
+        }
+
+        .prize-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+        }
+
+        .prize-label {
+            background-color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            border: 1px solid var(--border);
+            margin-left: 40px;
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+        }
+
+        .zero-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #FF6B6B;
+            z-index: 4;
+            box-shadow: 0 1px 3px rgba(255, 68, 68, 0.3);
+        }
+
+        @media (max-width: 380px) {
+            .child-name-input {
+                font-size: 13px;
+            }
+
+            .btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+
+            .banner-text {
+                font-size: 26px;
+            }
+
+            .btn-icon {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="banner">
+            <span class="banner-emoji">😊</span>
+            <div class="banner-text">SmileyChart</div>
+            <span class="banner-emoji">😠</span>
+        </div>
+
+        <div class="child-view-banner" id="child-view-banner">
+            <span>👀 Viewing: <strong id="child-view-name"></strong> (read-only)</span>
+            <button class="toolbar-btn-inverse" id="exit-child-view-btn">Exit</button>
+        </div>
+
+        <div class="chart-section">
+            <div class="child-tabs-row">
+                <div class="child-tabs" id="child-tabs">
+                    <!-- Child tabs (plus the trailing "+" add-child tab) are rendered dynamically -->
+                </div>
+                <button class="child-search-btn" id="child-search-btn" title="Find a child" aria-label="Find a child">🔍</button>
+            </div>
+            <div class="child-tab-menu" id="child-tab-menu">
+                <button class="child-tab-menu-item" id="menu-share-codes">🔗 Share Codes</button>
+                <button class="child-tab-menu-item" id="menu-child-view">👀 Child View</button>
+            </div>
+
+            <div class="chart-container" id="chart-container">
+                <div class="chart-wrapper" id="chart-wrapper">
+                    <div class="y-axis-sticky" id="y-axis-sticky"></div>
+                    <canvas id="chart"></canvas>
+                    <svg id="connector-svg" class="connector-svg"></svg>
+                    <!-- Chart points and prize lines will be dynamically added here -->
+                </div>
+            </div>
+            <div class="chart-resize-handle" id="chart-resize-handle" title="Drag to resize the chart"></div>
+
+            <div class="controls">
+                <button class="btn btn-smiley" id="smiley-btn">
+                    <span class="btn-icon">😊</span>
+                    Smiley
+                </button>
+                <button class="btn btn-grumpy" id="grumpy-btn">
+                    <span class="btn-icon">😠</span>
+                    Grumpy
+                </button>
+                <button class="btn btn-prize" id="add-prize-btn" title="Add a prize" aria-label="Add a prize">
+                    <span class="btn-icon">🎁</span>
+                </button>
+            </div>
+
+            <div class="quick-notes" id="quick-notes">
+                <div class="quick-notes-title">Behaviours:</div>
+                <div class="quick-notes-list" id="quick-notes-list">
+                    <!-- Quick notes will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="prizes-section" id="prizes-section">
+            <div id="prizes-container">
+                <!-- Prizes will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding notes -->
+    <div class="modal" id="note-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">Add Note</div>
+            <input type="text" class="modal-input" id="note-input" placeholder="Enter reason for smiley/grumpy...">
+
+            <div class="value-stepper-row">
+                <div class="value-stepper-label">Value</div>
+                <div class="value-stepper">
+                    <button type="button" class="value-stepper-btn" id="value-minus-btn">−</button>
+                    <div class="value-stepper-count" id="value-count">1</div>
+                    <button type="button" class="value-stepper-btn" id="value-plus-btn">+</button>
+                </div>
+            </div>
+
+            <div class="quick-notes">
+                <div class="quick-notes-title">Frequently used notes</div>
+                <div class="quick-notes-list" id="modal-quick-notes">
+                    <!-- Quick notes will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancel-btn">Cancel</button>
+                <button class="modal-btn modal-btn-save" id="save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing notes -->
+    <div class="modal" id="view-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="view-modal-title">Event Details</div>
+            <div id="view-modal-content">
+                <!-- Content will be dynamically added -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="close-view-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing prizes -->
+    <div class="modal" id="prize-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="prize-modal-title">Edit Prize</div>
+            <input type="text" class="modal-input" id="prize-name-input" placeholder="Prize name">
+            <input type="number" class="modal-input" id="prize-requirement-input" placeholder="Goodwill level required" min="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancel-prize-btn">Cancel</button>
+                <button class="modal-btn modal-btn-save" id="save-prize-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal listing each child's access code (parent use) -->
+    <div class="modal" id="codes-modal">
+        <div class="modal-content">
+            <div class="modal-title">Share Codes</div>
+            <p class="modal-helper-text">Give a child their code so they can open this same page on their own device and switch to Child View to see their own chart, read-only.</p>
+            <div id="codes-list"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="close-codes-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for entering a child's access code to switch to Child View -->
+    <div class="modal" id="child-view-code-modal">
+        <div class="modal-content">
+            <div class="modal-title">Child View</div>
+            <p class="modal-helper-text">Enter the code your parent gave you to see your own chart.</p>
+            <input type="text" class="modal-input" id="child-view-code-input" placeholder="4-digit code" inputmode="numeric" maxlength="4">
+            <div class="child-view-error" id="child-view-error">That code doesn't match any child.</div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancel-child-view-btn">Cancel</button>
+                <button class="modal-btn modal-btn-save" id="submit-child-view-btn">View</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for finding a child (shown when there are too many tabs to fit) -->
+    <div class="modal" id="child-search-modal">
+        <div class="modal-content">
+            <div class="modal-title">Find a Child</div>
+            <input type="text" class="modal-input" id="child-search-input" placeholder="Type a name...">
+            <div class="child-search-results" id="child-search-results"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="close-child-search-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script>
+        // App state
+        const MAX_CHILDREN = 30;
+        const STORAGE_KEY = 'smileychart-family-data';
+
+        // 'parent' (full access, on the family's main device) or 'child'
+        // (read-only, entered via that child's access code). Not persisted -
+        // each device picks its own mode locally.
+        let viewMode = 'parent';
+        function isChildView() { return viewMode === 'child'; }
+
+        const state = {
+            currentChild: 1,
+            editingChild: null,
+            nextChildId: 2,
+            children: {
+                1: { name: "Name 1", score: 0, events: [], code: null }
+            },
+            prizes: [],
+            chart: null,
+            editingPrizeId: null,
+            noteHistory: [],
+            noteColors: {},
+            reasonAliases: {},
+            // Smileys progress through a warm yellow -> green gradient, with each
+            // step chosen for clear visual separation from its neighbours
+            smileyColors: [
+                '#FDD835', '#C0CA33', '#7CB342', '#43A047', '#2E7D32', '#1B5E20'
+            ],
+            // Grumpys progress through a red -> purple gradient, same principle
+            grumpyColors: [
+                '#E53935', '#D81B60', '#AD1457', '#8E24AA', '#6A1B9A', '#4A148C'
+            ]
+        };
+
+        // DOM elements
+        const childTabsContainer = document.getElementById('child-tabs');
+        const smileyBtn = document.getElementById('smiley-btn');
+        const grumpyBtn = document.getElementById('grumpy-btn');
+        const noteModal = document.getElementById('note-modal');
+        const viewModal = document.getElementById('view-modal');
+        const prizeModal = document.getElementById('prize-modal');
+        const childSearchBtn = document.getElementById('child-search-btn');
+        const childSearchModal = document.getElementById('child-search-modal');
+        const childSearchInput = document.getElementById('child-search-input');
+        const childSearchResults = document.getElementById('child-search-results');
+        const closeChildSearchBtn = document.getElementById('close-child-search-btn');
+        const childTabMenu = document.getElementById('child-tab-menu');
+        const menuShareCodesBtn = document.getElementById('menu-share-codes');
+        const menuChildViewBtn = document.getElementById('menu-child-view');
+        const codesModal = document.getElementById('codes-modal');
+        const codesList = document.getElementById('codes-list');
+        const closeCodesBtn = document.getElementById('close-codes-btn');
+        const childViewCodeModal = document.getElementById('child-view-code-modal');
+        const childViewCodeInput = document.getElementById('child-view-code-input');
+        const childViewError = document.getElementById('child-view-error');
+        const cancelChildViewBtn = document.getElementById('cancel-child-view-btn');
+        const submitChildViewBtn = document.getElementById('submit-child-view-btn');
+        const childViewBanner = document.getElementById('child-view-banner');
+        const childViewNameEl = document.getElementById('child-view-name');
+        const exitChildViewBtn = document.getElementById('exit-child-view-btn');
+        const noteInput = document.getElementById('note-input');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const valueCountEl = document.getElementById('value-count');
+        const valueMinusBtn = document.getElementById('value-minus-btn');
+        const valuePlusBtn = document.getElementById('value-plus-btn');
+        const MAX_EVENT_VALUE = 10;
+
+        function setCurrentValue(v) {
+            state.currentValue = Math.max(1, Math.min(MAX_EVENT_VALUE, v));
+            valueCountEl.textContent = state.currentValue;
+            valueMinusBtn.disabled = state.currentValue <= 1;
+            valuePlusBtn.disabled = state.currentValue >= MAX_EVENT_VALUE;
+        }
+
+        valueMinusBtn.addEventListener('click', () => setCurrentValue((state.currentValue || 1) - 1));
+        valuePlusBtn.addEventListener('click', () => setCurrentValue((state.currentValue || 1) + 1));
+        const closeViewBtn = document.getElementById('close-view-btn');
+        const prizesContainer = document.getElementById('prizes-container');
+        const prizesSection = document.getElementById('prizes-section');
+        const addPrizeBtn = document.getElementById('add-prize-btn');
+        const prizeNameInput = document.getElementById('prize-name-input');
+        const prizeRequirementInput = document.getElementById('prize-requirement-input');
+        const savePrizeBtn = document.getElementById('save-prize-btn');
+        const cancelPrizeBtn = document.getElementById('cancel-prize-btn');
+        const chartCanvas = document.getElementById('chart');
+        const chartContainer = document.getElementById('chart-container');
+        const chartWrapper = document.getElementById('chart-wrapper');
+        const yAxisSticky = document.getElementById('y-axis-sticky');
+        const chartResizeHandle = document.getElementById('chart-resize-handle');
+        const quickNotesList = document.getElementById('quick-notes-list');
+        const modalQuickNotes = document.getElementById('modal-quick-notes');
+
+        // Constants for graph display
+        const Y_MIN = -100;
+        const Y_MAX = 100;
+        const PIXELS_PER_UNIT = 32;    // vertical zoom - how tall one goodwill point is (visible chart window stays 300px; only the scrollable content stretches)
+        const AXIS_WIDTH = 32;         // width reserved for the sticky y-axis column (one grid column)
+        const COLUMN_WIDTH = 32;       // each emoji sits centered in a 32px grid column, matching the background grid
+        const POINT_OFFSET_X = -32;    // fine-tune: nudge every emoji 32px left of its column center
+        const POINT_OFFSET_Y = 16;     // fine-tune: nudge every emoji 16px lower than its value's gridline
+        const CHART_MIN_HEIGHT = 160;  // shared bounds for both the auto-fit default size and manual drag-resize
+        const CHART_MAX_HEIGHT = 650;  // fallback ceiling for manual drag-resize on small screens
+
+        // The chart is allowed to grow to fill the device's full screen
+        // height (not just the old fixed 650px cap) - whichever is larger.
+        function getChartMaxHeight() {
+            return Math.max(CHART_MAX_HEIGHT, window.innerHeight);
+        }
+        const DEFAULT_BOTTOM_VALUE = -2; // the goodwill value that sits at the bottom edge of the chart window by default
+
+        // Point diameter matches the CSS breakpoint so spacing math stays in sync
+        function getPointSize() {
+            return window.innerWidth <= 380 ? 26 : 30;
+        }
+
+        function behaviourEmoji(type) {
+            return type === 'smiley' ? '😊' : '😠';
+        }
+
+        // --- Shared persistence ------------------------------------------------
+        // Saves the family's data (children, scores, events, prizes,
+        // behaviour history) to shared artifact storage, so it survives a
+        // refresh and is visible from any device that opens this same page.
+        // Writes are debounced so rapid changes don't spam the storage API.
+        let saveTimer = null;
+        function scheduleSave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(persistState, 600);
+        }
+
+        async function persistState() {
+            if (!window.storage) return; // not running in an environment with storage
+            try {
+                const payload = {
+                    children: state.children,
+                    prizes: state.prizes,
+                    noteHistory: state.noteHistory,
+                    noteColors: state.noteColors,
+                    reasonAliases: state.reasonAliases,
+                    nextChildId: state.nextChildId
+                };
+                await window.storage.set(STORAGE_KEY, JSON.stringify(payload), true);
+            } catch (err) {
+                console.error('Could not save family data:', err);
+            }
+        }
+
+        // Returns true if saved data was found and loaded.
+        async function loadPersistedState() {
+            if (!window.storage) return false;
+            try {
+                const result = await window.storage.get(STORAGE_KEY, true);
+                if (!result || !result.value) return false;
+                const data = JSON.parse(result.value);
+
+                if (data.children) {
+                    Object.values(data.children).forEach(child => {
+                        child.events = (child.events || []).map(ev => ({ ...ev, date: new Date(ev.date) }));
+                    });
+                    state.children = data.children;
+                }
+                if (data.prizes) state.prizes = data.prizes;
+                if (data.noteHistory) state.noteHistory = data.noteHistory;
+                if (data.noteColors) state.noteColors = data.noteColors;
+                if (data.reasonAliases) state.reasonAliases = data.reasonAliases;
+                if (data.nextChildId) state.nextChildId = data.nextChildId;
+
+                const ids = Object.keys(state.children).map(Number);
+                if (ids.length && !ids.includes(state.currentChild)) {
+                    state.currentChild = Math.min(...ids);
+                }
+                return true;
+            } catch (err) {
+                // Nothing saved yet (or storage unavailable) - fine, defaults stand.
+                return false;
+            }
+        }
+
+        // --- Child access codes --------------------------------------------
+        // Lets a child view their own chart read-only on a separate device,
+        // without a full account system: whoever has the code can open this
+        // same page and switch to Child View. Good enough for family trust;
+        // not real per-user security (anyone with the page can still see
+        // the full data in Parent View).
+        function generateChildCode() {
+            return String(Math.floor(1000 + Math.random() * 9000));
+        }
+
+        function uniqueChildCode() {
+            const used = new Set(Object.values(state.children).map(c => c.code).filter(Boolean));
+            let code;
+            do { code = generateChildCode(); } while (used.has(code));
+            return code;
+        }
+
+        function ensureChildCodes() {
+            Object.values(state.children).forEach(child => {
+                if (!child.code) child.code = uniqueChildCode();
+            });
+        }
+
+        // Reliable tap vs. double-tap detection for both mouse and touch.
+        // Native 'dblclick' isn't used here: even when it fires, the two
+        // 'click' events that precede it still fire too, so a naive
+        // click-opens-X / dblclick-opens-Y split can let the single-tap
+        // action run as a side effect of every double-tap. This instead
+        // times consecutive 'click' events (which fire reliably for both
+        // mouse and touch) and only commits to the single-tap action if a
+        // second one doesn't follow in time.
+        function bindTapAndDoubleTap(el, onSingleTap, onDoubleTap, delay = 350) {
+            let lastTapTime = 0;
+            let pendingTimer = null;
+
+            el.addEventListener('click', (e) => {
+                const now = Date.now();
+                if (now - lastTapTime < delay) {
+                    lastTapTime = 0;
+                    if (pendingTimer) {
+                        clearTimeout(pendingTimer);
+                        pendingTimer = null;
+                    }
+                    if (onDoubleTap) onDoubleTap(e);
+                } else {
+                    lastTapTime = now;
+                    if (onSingleTap) {
+                        pendingTimer = setTimeout(() => {
+                            pendingTimer = null;
+                            onSingleTap(e);
+                        }, delay);
+                    }
+                }
+            });
+        }
+
+        // Initialize the app
+        async function init() {
+            // Load any previously-saved family data (shared across devices
+            // that open this same page) before rendering anything.
+            await loadPersistedState();
+            ensureChildCodes();
+
+            // Child tabs (including the trailing "+" add-child tab) are
+            // built dynamically since the number of children can grow.
+            renderChildTabs();
+
+            smileyBtn.addEventListener('click', () => openNoteModal('smiley'));
+            grumpyBtn.addEventListener('click', () => openNoteModal('grumpy'));
+
+            saveBtn.addEventListener('click', saveNote);
+            cancelBtn.addEventListener('click', closeNoteModal);
+            closeViewBtn.addEventListener('click', closeViewModal);
+
+            addPrizeBtn.addEventListener('click', () => openPrizeModal(null, true));
+            savePrizeBtn.addEventListener('click', savePrize);
+            cancelPrizeBtn.addEventListener('click', closePrizeModal);
+
+            childSearchBtn.addEventListener('click', openChildSearch);
+            closeChildSearchBtn.addEventListener('click', closeChildSearch);
+            childSearchInput.addEventListener('input', renderChildSearchResults);
+
+            menuShareCodesBtn.addEventListener('click', () => {
+                closeTabMenu();
+                openCodesModal();
+            });
+            closeCodesBtn.addEventListener('click', closeCodesModal);
+
+            menuChildViewBtn.addEventListener('click', () => {
+                closeTabMenu();
+                openChildViewPrompt();
+            });
+            cancelChildViewBtn.addEventListener('click', closeChildViewPrompt);
+            submitChildViewBtn.addEventListener('click', submitChildViewCode);
+            childViewCodeInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submitChildViewCode();
+            });
+            exitChildViewBtn.addEventListener('click', exitChildView);
+
+            // Close the dropdown when tapping/clicking anywhere else
+            document.addEventListener('click', (e) => {
+                if (!childTabMenu.contains(e.target) && !e.target.classList.contains('child-tab-menu-btn')) {
+                    closeTabMenu();
+                }
+            });
+            window.addEventListener('scroll', closeTabMenu, true);
+
+            // Recompute point size/spacing/fill if the viewport is resized
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (state.chart) updateChart();
+                }, 150);
+            });
+
+            // Give the chart its default height based on how much of the
+            // device's screen is actually available, so the whole app fits
+            // without the page itself needing to scroll.
+            fitChartToViewport();
+
+            // Initialize chart
+            initChart();
+
+            // Update display
+            updateDisplay();
+        }
+
+        // Sizes the chart window so the rest of the card (banner, tabs,
+        // buttons, behaviours, prizes) plus the chart together fit the
+        // current viewport, rather than always defaulting to a fixed 300px.
+        function fitChartToViewport() {
+            const originalHeight = chartContainer.style.height;
+            chartContainer.style.height = '0px';
+
+            // With the chart collapsed, whatever height remains is exactly
+            // what every other row in the card needs.
+            const everythingElseHeight = document.body.scrollHeight;
+            const available = window.innerHeight - everythingElseHeight - 8; // small breathing room
+
+            chartContainer.style.height = originalHeight; // restore before applying the real value
+
+            // Default to using the full available screen height (whatever
+            // remains after the banner/tabs/buttons/behaviours/prizes rows),
+            // rather than capping at a fixed pixel height.
+            const fitted = Math.min(getChartMaxHeight(), Math.max(CHART_MIN_HEIGHT, available));
+            chartContainer.style.height = `${fitted}px`;
+        }
+
+        // Build the row of child tabs (plus a trailing "+" tab, while under
+        // the cap) from scratch based on current state. Called on init and
+        // whenever the set of children, the selection, or a name changes.
+        // Shows/hides the shared Share Codes / Child View dropdown, positioned
+        // next to whichever tab's "..." button was tapped. There's one menu
+        // element reused for every tab rather than one per tab.
+        let tabMenuAnchor = null;
+        function toggleTabMenu(anchorBtn) {
+            if (childTabMenu.classList.contains('visible') && tabMenuAnchor === anchorBtn) {
+                closeTabMenu();
+                return;
+            }
+            const rect = anchorBtn.getBoundingClientRect();
+            childTabMenu.style.top = `${rect.bottom + 4}px`;
+            childTabMenu.style.left = `${Math.max(8, rect.right - 170)}px`;
+            childTabMenu.classList.add('visible');
+            tabMenuAnchor = anchorBtn;
+        }
+
+        function closeTabMenu() {
+            childTabMenu.classList.remove('visible');
+        }
+
+        function renderChildTabs() {
+            childTabsContainer.innerHTML = '';
+            closeTabMenu();
+
+            if (isChildView()) {
+                childSearchBtn.classList.remove('visible');
+                return;
+            }
+
+            const childIds = Object.keys(state.children).map(Number).sort((a, b) => a - b);
+
+            childIds.forEach(childId => {
+                const tab = document.createElement('div');
+                tab.className = 'child-tab' + (childId === state.currentChild ? ' active' : '');
+                tab.dataset.child = String(childId);
+                tab.setAttribute('role', 'button');
+                tab.setAttribute('tabindex', '0');
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'child-name-input';
+                input.value = state.children[childId].name;
+                input.dataset.child = String(childId);
+                input.title = 'Double-click to rename';
+                input.readOnly = true;
+
+                input.addEventListener('blur', (e) => {
+                    state.children[childId].name = e.target.value.trim() || `Name ${childId}`;
+                    stopEditingChild(childId);
+                });
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') e.target.blur();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') e.target.blur();
+                });
+
+                tab.appendChild(input);
+
+                // Small "..." menu, holding the Share Codes / Child View
+                // actions that used to live in a separate toolbar row.
+                const menuBtn = document.createElement('button');
+                menuBtn.className = 'child-tab-menu-btn';
+                menuBtn.textContent = '⋮';
+                menuBtn.title = 'More options';
+                menuBtn.setAttribute('aria-label', 'More options');
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleTabMenu(menuBtn);
+                });
+                tab.appendChild(menuBtn);
+
+                bindTapAndDoubleTap(
+                    tab,
+                    () => { if (state.editingChild !== childId) selectChild(childId); },
+                    () => startEditingChild(childId)
+                );
+
+                childTabsContainer.appendChild(tab);
+            });
+
+            if (childIds.length < MAX_CHILDREN) {
+                const addTab = document.createElement('button');
+                addTab.className = 'child-tab child-tab-add';
+                addTab.textContent = '+';
+                addTab.title = 'Add a child';
+                addTab.setAttribute('aria-label', 'Add a child');
+                addTab.addEventListener('click', addChild);
+                childTabsContainer.appendChild(addTab);
+            }
+
+            // Only offer search once there are too many tabs to see at once.
+            const overflowing = childTabsContainer.scrollWidth > childTabsContainer.clientWidth + 1;
+            childSearchBtn.classList.toggle('visible', overflowing);
+        }
+
+        // Add a new child (up to MAX_CHILDREN) and switch to it.
+        function addChild() {
+            const childIds = Object.keys(state.children);
+            if (childIds.length >= MAX_CHILDREN) return;
+
+            const newId = state.nextChildId++;
+            state.children[newId] = { name: `Name ${newId}`, score: 0, events: [], code: uniqueChildCode() };
+            state.currentChild = newId;
+
+            renderChildTabs();
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+            scheduleSave();
+
+            // Scroll the newly added tab into view since the row can now
+            // extend well past the visible width.
+            const newTab = document.querySelector(`.child-tab[data-child="${newId}"]`);
+            if (newTab) newTab.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' });
+        }
+
+        // Open the "find a child" modal, used once there are too many tabs
+        // to browse comfortably.
+        function openChildSearch() {
+            childSearchInput.value = '';
+            childSearchModal.style.display = 'flex';
+            renderChildSearchResults();
+            childSearchInput.focus();
+        }
+
+        function closeChildSearch() {
+            childSearchModal.style.display = 'none';
+        }
+
+        function renderChildSearchResults() {
+            const query = childSearchInput.value.trim().toLowerCase();
+            childSearchResults.innerHTML = '';
+
+            const childIds = Object.keys(state.children).map(Number).sort((a, b) => a - b);
+            const matches = childIds.filter(id => state.children[id].name.toLowerCase().includes(query));
+
+            if (matches.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'child-search-empty';
+                empty.textContent = 'No matching children';
+                childSearchResults.appendChild(empty);
+                return;
+            }
+
+            matches.forEach(id => {
+                const result = document.createElement('button');
+                result.className = 'child-search-result' + (id === state.currentChild ? ' active' : '');
+                result.textContent = state.children[id].name;
+                result.addEventListener('click', () => {
+                    selectChild(id);
+                    closeChildSearch();
+                    const tab = document.querySelector(`.child-tab[data-child="${id}"]`);
+                    if (tab) tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                });
+                childSearchResults.appendChild(result);
+            });
+        }
+
+        // --- Share Codes modal (parent) -------------------------------------
+        function openCodesModal() {
+            renderCodesList();
+            codesModal.style.display = 'flex';
+        }
+
+        function closeCodesModal() {
+            codesModal.style.display = 'none';
+        }
+
+        function renderCodesList() {
+            codesList.innerHTML = '';
+            const childIds = Object.keys(state.children).map(Number).sort((a, b) => a - b);
+
+            childIds.forEach(id => {
+                const child = state.children[id];
+                const row = document.createElement('div');
+                row.className = 'code-row';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'code-row-name';
+                nameSpan.textContent = child.name;
+
+                const codeSpan = document.createElement('span');
+                codeSpan.className = 'code-row-code';
+                codeSpan.textContent = child.code;
+
+                const regenBtn = document.createElement('button');
+                regenBtn.className = 'code-row-regen';
+                regenBtn.textContent = 'Regenerate';
+                regenBtn.addEventListener('click', () => {
+                    child.code = uniqueChildCode();
+                    scheduleSave();
+                    renderCodesList();
+                });
+
+                row.appendChild(nameSpan);
+                row.appendChild(codeSpan);
+                row.appendChild(regenBtn);
+                codesList.appendChild(row);
+            });
+        }
+
+        // --- Child View (read-only, entered via access code) ----------------
+        function openChildViewPrompt() {
+            childViewCodeInput.value = '';
+            childViewError.style.display = 'none';
+            childViewCodeModal.style.display = 'flex';
+            childViewCodeInput.focus();
+        }
+
+        function closeChildViewPrompt() {
+            childViewCodeModal.style.display = 'none';
+        }
+
+        function submitChildViewCode() {
+            const code = childViewCodeInput.value.trim();
+            const match = Object.keys(state.children)
+                .map(Number)
+                .find(id => state.children[id].code === code);
+
+            if (match === undefined) {
+                childViewError.style.display = 'block';
+                return;
+            }
+
+            closeChildViewPrompt();
+            enterChildView(match);
+        }
+
+        function enterChildView(childId) {
+            viewMode = 'child';
+            state.currentChild = childId;
+            document.body.classList.add('child-view-mode');
+            childViewNameEl.textContent = state.children[childId].name;
+
+            renderChildTabs();
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+        }
+
+        function exitChildView() {
+            viewMode = 'parent';
+            document.body.classList.remove('child-view-mode');
+
+            renderChildTabs();
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+        }
+
+        // Start editing child name (triggered by double-click on the tab)
+        function startEditingChild(childId) {
+            state.editingChild = childId;
+            const tab = document.querySelector(`.child-tab[data-child="${childId}"]`);
+            const input = tab.querySelector('.child-name-input');
+            input.readOnly = false;
+            input.style.pointerEvents = 'auto';
+            input.focus();
+            input.select();
+        }
+
+        // Stop editing and lock the tab back to whole-tab-clickable mode
+        function stopEditingChild(childId) {
+            const tab = document.querySelector(`.child-tab[data-child="${childId}"]`);
+            const input = tab.querySelector('.child-name-input');
+            input.readOnly = true;
+            input.style.pointerEvents = 'none';
+            input.value = state.children[childId].name;
+            state.editingChild = null;
+            scheduleSave();
+        }
+
+        // Select a child
+        function selectChild(childId) {
+            state.currentChild = childId;
+
+            renderChildTabs();
+
+            // Update chart, prizes, and quick notes for the newly selected child
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+        }
+
+        // Open note modal
+        function openNoteModal(type, presetNote = '') {
+            state.currentType = type;
+            const title = document.getElementById('modal-title');
+            title.textContent = `Add Note for ${type === 'smiley' ? '😊 Smiley' : '😠 Grumpy'}`;
+            noteInput.value = presetNote;
+            setCurrentValue(1);
+            noteModal.style.display = 'flex';
+            noteInput.focus();
+
+            // Update quick notes in modal
+            updateModalQuickNotes();
+        }
+
+        // Close note modal
+        function closeNoteModal() {
+            noteModal.style.display = 'none';
+        }
+
+        // Close view modal
+        function closeViewModal() {
+            viewModal.style.display = 'none';
+        }
+
+        // Open prize modal
+        function openPrizeModal(prizeId = null, isNew = false) {
+            state.editingPrizeId = prizeId;
+            const title = document.getElementById('prize-modal-title');
+
+            if (prizeId && !isNew) {
+                // Editing existing prize
+                const prize = state.prizes.find(p => p.id === prizeId);
+                title.textContent = 'Edit Prize';
+                prizeNameInput.value = prize.name;
+                prizeRequirementInput.value = prize.requirement;
+            } else {
+                // Adding new prize
+                title.textContent = 'Add New Prize';
+                prizeNameInput.value = '';
+                prizeRequirementInput.value = '';
+            }
+
+            prizeModal.style.display = 'flex';
+            prizeNameInput.focus();
+        }
+
+        // Close prize modal
+        function closePrizeModal() {
+            prizeModal.style.display = 'none';
+            state.editingPrizeId = null;
+        }
+
+        // Save note and add event
+        function saveNote() {
+            const reason = noteInput.value.trim();
+            if (reason) {
+                const value = state.currentValue || 1;
+                const event = {
+                    type: state.currentType,
+                    reason: reason,
+                    date: new Date(),
+                    scoreChange: state.currentType === 'smiley' ? value : -value
+                };
+
+                // Add event to current child
+                state.children[state.currentChild].events.push(event);
+
+                // Update score
+                state.children[state.currentChild].score += event.scoreChange;
+
+                // Add to note history
+                addToNoteHistory(reason, state.currentType);
+
+                // Update UI
+                updateChart();
+                updatePrizesDisplay();
+                updateQuickNotes();
+                scheduleSave();
+
+                // Close modal
+                closeNoteModal();
+            } else {
+                alert("Please enter a reason for the smiley/grumpy");
+                noteInput.focus();
+            }
+        }
+
+        // Save prize
+        function savePrize() {
+            const name = prizeNameInput.value.trim();
+            const requirement = parseInt(prizeRequirementInput.value);
+
+            if (name && requirement > 0) {
+                if (state.editingPrizeId) {
+                    // Update existing prize
+                    const prizeIndex = state.prizes.findIndex(p => p.id === state.editingPrizeId);
+                    if (prizeIndex !== -1) {
+                        state.prizes[prizeIndex].name = name;
+                        state.prizes[prizeIndex].requirement = requirement;
+                    }
+                } else {
+                    // Add new prize, assigning it the next available color
+                    const newColor = getNextPrizeColor();
+                    const newId = state.prizes.length > 0 ? Math.max(...state.prizes.map(p => p.id)) + 1 : 1;
+                    state.prizes.push({
+                        id: newId,
+                        name: name,
+                        requirement: requirement,
+                        color: newColor
+                    });
+                }
+
+                // Update UI
+                updatePrizesDisplay();
+                updateChart();
+                scheduleSave();
+
+                // Close modal
+                closePrizeModal();
+            } else {
+                alert("Please enter a valid prize name and requirement");
+                if (!name) prizeNameInput.focus();
+                else prizeRequirementInput.focus();
+            }
+        }
+
+        // Get next available prize color
+        function getNextPrizeColor() {
+            const prizeColors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#607D8B', '#795548'];
+            const usedColors = state.prizes.map(p => p.color);
+
+            for (let color of prizeColors) {
+                if (!usedColors.includes(color)) {
+                    return color;
+                }
+            }
+
+            // If all colors are used, generate a random one
+            return '#' + Math.floor(Math.random() * 16777215).toString(16);
+        }
+
+        // Add note to history
+        function addToNoteHistory(reason, type) {
+            // Check if note already exists in history
+            const existingNote = state.noteHistory.find(note => note.reason === reason && note.type === type);
+
+            if (existingNote) {
+                existingNote.count++;
+            } else {
+                // Assign a color if this is a new note, drawn from the type's gradient
+                if (!state.noteColors[reason]) {
+                    const colorArray = type === 'smiley' ? state.smileyColors : state.grumpyColors;
+                    const sameTypeCount = state.noteHistory.filter(n => n.type === type).length;
+                    state.noteColors[reason] = colorArray[sameTypeCount % colorArray.length];
+                }
+
+                state.noteHistory.push({
+                    reason: reason,
+                    type: type,
+                    count: 1
+                });
+            }
+
+            // Sort by count (most frequent first)
+            state.noteHistory.sort((a, b) => b.count - a.count);
+        }
+
+        // Update quick notes
+        function updateQuickNotes() {
+            quickNotesList.innerHTML = '';
+
+            if (state.noteHistory.length === 0) {
+                return;
+            }
+
+            state.noteHistory.forEach(note => {
+                const noteElement = document.createElement('button');
+                noteElement.className = 'quick-note';
+                noteElement.textContent = `${behaviourEmoji(note.type)} ${note.reason}`;
+                noteElement.title = 'Double-click to rename';
+                noteElement.style.backgroundColor = state.noteColors[note.reason];
+                noteElement.style.color = getContrastColor(state.noteColors[note.reason]);
+                noteElement.style.borderColor = state.noteColors[note.reason];
+
+                bindTapAndDoubleTap(
+                    noteElement,
+                    () => openNoteModal(note.type, note.reason),
+                    () => startEditingBehaviour(noteElement, note)
+                );
+
+                quickNotesList.appendChild(noteElement);
+            });
+        }
+
+        // Swap a behaviour chip for an inline text input so its label can be
+        // renamed directly, without a separate edit button/modal.
+        function startEditingBehaviour(chip, note) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'quick-note-edit-input';
+            input.value = note.reason;
+            input.size = Math.max(4, note.reason.length);
+            input.style.backgroundColor = state.noteColors[note.reason];
+            input.style.color = getContrastColor(state.noteColors[note.reason]);
+
+            chip.replaceWith(input);
+            input.focus();
+            input.select();
+
+            let committed = false;
+            const commit = () => {
+                if (committed) return;
+                committed = true;
+                renameBehaviour(note, input.value);
+            };
+
+            input.addEventListener('blur', commit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    committed = true; // discard the edit
+                    updateQuickNotes();
+                }
+            });
+        }
+
+        // Follows a chain of renames to the current name for a behaviour, so
+        // events logged under an old name still display/color correctly.
+        function resolveReason(type, reason) {
+            let current = reason;
+            const seen = new Set();
+            while (!seen.has(current) && state.reasonAliases[`${type}::${current}`]) {
+                seen.add(current);
+                current = state.reasonAliases[`${type}::${current}`];
+            }
+            return current;
+        }
+
+        // Rename a behaviour across its history entry and color mapping.
+        // If the new name collides with an existing behaviour of the same
+        // type, the two are merged rather than silently overwritten.
+        function renameBehaviour(note, newReasonRaw) {
+            const newReason = newReasonRaw.trim();
+            const oldReason = note.reason;
+
+            if (!newReason || newReason === oldReason) {
+                updateQuickNotes();
+                return;
+            }
+
+            const collision = state.noteHistory.find(n => n !== note && n.reason === newReason && n.type === note.type);
+            if (collision) {
+                collision.count += note.count;
+                state.noteHistory = state.noteHistory.filter(n => n !== note);
+            } else {
+                note.reason = newReason;
+                if (state.noteColors[oldReason] && !state.noteColors[newReason]) {
+                    state.noteColors[newReason] = state.noteColors[oldReason];
+                }
+            }
+            delete state.noteColors[oldReason];
+
+            // Point every already-logged event that used the old name (and
+            // anything that previously aliased to it) at the new name, so
+            // the "Smiley/Grumpy Details" popup and chart point colors for
+            // past entries stay in line with the current label.
+            state.reasonAliases[`${note.type}::${oldReason}`] = newReason;
+            scheduleSave();
+
+            updateQuickNotes();
+        }
+
+        // Update modal quick notes
+        function updateModalQuickNotes() {
+            modalQuickNotes.innerHTML = '';
+
+            if (state.noteHistory.length === 0) {
+                return;
+            }
+
+            state.noteHistory.forEach(note => {
+                const noteElement = document.createElement('button');
+                noteElement.className = 'quick-note';
+                noteElement.textContent = `${behaviourEmoji(note.type)} ${note.reason}`;
+                noteElement.style.backgroundColor = state.noteColors[note.reason];
+                noteElement.style.color = getContrastColor(state.noteColors[note.reason]);
+                noteElement.style.borderColor = state.noteColors[note.reason];
+                noteElement.addEventListener('click', () => {
+                    noteInput.value = note.reason;
+                });
+
+                modalQuickNotes.appendChild(noteElement);
+            });
+        }
+
+        // Get contrast color for text (black or white)
+        function getContrastColor(hexColor) {
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#FFFFFF';
+        }
+
+        // View event details
+        function viewEventDetails(event) {
+            const title = document.getElementById('view-modal-title');
+            const content = document.getElementById('view-modal-content');
+            const currentReason = resolveReason(event.type, event.reason);
+
+            title.textContent = `${event.type === 'smiley' ? '😊 Smiley' : '😠 Grumpy'} Details`;
+
+            content.innerHTML = `
+                <p><strong>Reason:</strong> ${currentReason}</p>
+                <p><strong>Date:</strong> ${formatDate(event.date)}</p>
+                <p><strong>Score Change:</strong> ${event.scoreChange > 0 ? '+' : ''}${event.scoreChange}</p>
+            `;
+
+            viewModal.style.display = 'flex';
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Initialize chart
+        function initChart() {
+            // Fixed vertical extent (-100..+100): the wrapper is set tall
+            // enough to hold the whole range and the user scrolls to it.
+            chartWrapper.style.height = `${(Y_MAX - Y_MIN) * PIXELS_PER_UNIT}px`;
+
+            state.chart = new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                    labels: [''],
+                    datasets: [{
+                        label: 'Goodwill',
+                        data: [0],
+                        borderColor: 'transparent',
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        fill: false,
+                        tension: 0,
+                        pointBackgroundColor: 'transparent',
+                        pointBorderColor: 'transparent',
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        spanGaps: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        // Reserve space on the left equal to the sticky axis column,
+                        // so the frozen numbering doesn't cover the plotted data.
+                        // No padding on the other sides, so -100 sits flush at the bottom.
+                        padding: { top: 0, right: 0, bottom: 0, left: AXIS_WIDTH }
+                    },
+                    scales: {
+                        y: {
+                            min: Y_MIN,
+                            max: Y_MAX,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                // Labels are rendered by the sticky HTML overlay instead,
+                                // so the canvas only needs to draw the gridlines.
+                                display: false
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.32)',
+                                lineWidth: 1,
+                                drawBorder: false,
+                                drawTicks: false
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            // Graph-paper look: visible vertical gridlines too
+                            grid: {
+                                display: true,
+                                color: 'rgba(255, 255, 255, 0.24)',
+                                lineWidth: 1,
+                                drawBorder: false,
+                                drawTicks: false
+                            },
+                            border: { display: false },
+                            ticks: {
+                                display: false
+                            },
+                            offset: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        },
+                        zoom: {
+                            // Panning stays handled by the existing scroll container -
+                            // this just adds pinch/wheel zoom on top of it.
+                            pan: { enabled: false },
+                            zoom: {
+                                wheel: { enabled: true, speed: 0.08 },
+                                pinch: { enabled: true },
+                                mode: 'xy',
+                                onZoomComplete: () => refreshOverlays()
+                            },
+                            limits: {
+                                x: { min: 'original', max: 'original' },
+                                y: { min: 'original', max: 'original' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // How many empty categories are needed so the grid fills the
+        // container's visible width even when there are few/no events yet.
+        function getFillCategoryCount(spacing) {
+            const visibleWidth = chartContainer.clientWidth || 400;
+            return Math.max(1, Math.ceil((visibleWidth - AXIS_WIDTH) / spacing));
+        }
+
+        // Update chart with current child's data
+        function updateChart() {
+            const events = state.children[state.currentChild].events;
+            const spacing = COLUMN_WIDTH;
+            const pointCount = events.length + 1; // +1 for the starting zero point
+
+            // Total categories is at least enough to fill the visible width
+            // (so the grid/prize lines fill the frame from the start) and at
+            // least enough to hold every point at a fixed, tight spacing -
+            // points are never stretched to fill extra space.
+            const totalCategories = Math.max(pointCount, getFillCategoryCount(spacing));
+            const requiredWidth = Math.max(chartContainer.clientWidth || 400, AXIS_WIDTH + totalCategories * spacing);
+            chartWrapper.style.width = `${requiredWidth}px`;
+
+            const labels = Array(totalCategories).fill('');
+            const data = Array(totalCategories).fill(null);
+
+            let cumulativeScore = 0;
+            data[0] = 0;
+            events.forEach((event, idx) => {
+                cumulativeScore += event.scoreChange;
+                data[idx + 1] = cumulativeScore;
+            });
+
+            state.chart.data.labels = labels;
+            state.chart.data.datasets[0].data = data;
+            state.chart.update();
+
+            refreshOverlays();
+
+            // Always reset to the left edge so prize labels are visible from
+            // the start, and vertically anchor to the default framing below.
+            chartContainer.scrollLeft = 0;
+            applyDefaultVerticalPosition();
+        }
+
+        // Redraw the HTML overlays (emoji points, prize lines, zero line,
+        // sticky axis numbers) to match the chart's current scale. Called
+        // after data changes and also after the user zooms, since zooming
+        // rescales the canvas without going through updateChart().
+        function refreshOverlays() {
+            const events = state.children[state.currentChild].events;
+            addChartPoints(events);
+            addPrizeLines();
+            addZeroLine();
+            updateYAxisLabels();
+        }
+
+        // Chart.js can reserve a small amount of pixel space around the plot
+        // area (axis border/tick allowances etc.) even with labels hidden.
+        // Rather than resizing the wrapper to compensate (which risked
+        // corrupting the scale on repeated calls), we just measure it and
+        // keep it out of the scrollable range below.
+        function getVerticalReservedGap() {
+            const chart = state.chart;
+            if (!chart || !chart.chartArea) return 0;
+            const gap = chartCanvas.clientHeight - chart.chartArea.bottom;
+            return gap > 0 ? gap : 0;
+        }
+
+        // The furthest the chart may be scrolled down without exposing any
+        // reserved space below the -100 gridline.
+        function getMaxVerticalScroll() {
+            const usableHeight = chartWrapper.offsetHeight - getVerticalReservedGap();
+            return Math.max(0, usableHeight - chartContainer.clientHeight);
+        }
+
+        // Default vertical framing: position the chart so DEFAULT_BOTTOM_VALUE
+        // (-2) sits right at the bottom edge of the visible window.
+        function applyDefaultVerticalPosition() {
+            const yScale = state.chart.scales.y;
+            const y = yScale.getPixelForValue(DEFAULT_BOTTOM_VALUE);
+            let target = y - chartContainer.clientHeight;
+            target = Math.max(0, Math.min(target, getMaxVerticalScroll()));
+            chartContainer.scrollTop = target;
+        }
+
+        // Hard safety net: whatever the cause of any stray overscroll (a
+        // shadow, stroke-width, or momentum/rubber-band scrolling), never
+        // let the visible scroll position go past the -100 gridline.
+        chartContainer.addEventListener('scroll', () => {
+            const maxScroll = getMaxVerticalScroll();
+            if (chartContainer.scrollTop > maxScroll) {
+                chartContainer.scrollTop = maxScroll;
+            } else if (chartContainer.scrollTop < 0) {
+                chartContainer.scrollTop = 0;
+            }
+        }, { passive: true });
+
+        // Let the user resize the chart window by dragging the handle below
+        // it, on both mouse and touch (via unified pointer events).
+        (function setupChartResizeHandle() {
+            let dragPointerId = null;
+            let startY = 0;
+            let startHeight = 0;
+
+            chartResizeHandle.addEventListener('pointerdown', (e) => {
+                dragPointerId = e.pointerId;
+                startY = e.clientY;
+                startHeight = chartContainer.getBoundingClientRect().height;
+                chartResizeHandle.classList.add('dragging');
+                chartResizeHandle.setPointerCapture(e.pointerId);
+                e.preventDefault();
+            });
+
+            chartResizeHandle.addEventListener('pointermove', (e) => {
+                if (dragPointerId === null || e.pointerId !== dragPointerId) return;
+                const newHeight = Math.min(getChartMaxHeight(), Math.max(CHART_MIN_HEIGHT, startHeight + (e.clientY - startY)));
+                chartContainer.style.height = `${newHeight}px`;
+            });
+
+            const endDrag = (e) => {
+                if (dragPointerId === null || e.pointerId !== dragPointerId) return;
+                dragPointerId = null;
+                chartResizeHandle.classList.remove('dragging');
+            };
+            chartResizeHandle.addEventListener('pointerup', endDrag);
+            chartResizeHandle.addEventListener('pointercancel', endDrag);
+        })();
+
+        // Add clickable points to the chart
+        function addChartPoints(events) {
+            // Remove existing points
+            const existingPoints = document.querySelectorAll('.chart-point');
+            existingPoints.forEach(point => point.remove());
+
+            if (events.length === 0) {
+                updateConnectorLine([]);
+                return;
+            }
+
+            const chart = state.chart;
+            const yScale = chart.scales.y;
+            const xScale = chart.scales.x;
+            const pointSize = getPointSize();
+            const halfPoint = pointSize / 2;
+
+            // Keep every marker's circle fully inside the wrapper's own box.
+            // Without this, the +/- pixel fine-tune offset can push a marker
+            // (partially) past the wrapper's edge; a child rendering outside
+            // its parent's box still counts toward the scrollable container's
+            // scrollHeight/scrollWidth, which let the user scroll past -100.
+            const maxX = chartWrapper.offsetWidth - halfPoint;
+            const maxY = chartWrapper.offsetHeight - halfPoint;
+
+            let cumulativeScore = 0;
+            const centers = [];
+
+            events.forEach((event, idx) => {
+                const prevScore = cumulativeScore;
+                cumulativeScore += event.scoreChange;
+
+                // An event's magnitude (how many smileys/grumpys it's worth)
+                // is rendered as that many emoji, stacked vertically at the
+                // same x-column, one per goodwill point - climbing from the
+                // score just before this event up to the score just after.
+                const direction = event.scoreChange >= 0 ? 1 : -1;
+                const magnitude = Math.max(1, Math.abs(event.scoreChange));
+                const x = Math.min(Math.max(xScale.getPixelForValue(idx + 1) + POINT_OFFSET_X, halfPoint), maxX);
+
+                for (let step = 1; step <= magnitude; step++) {
+                    const stepValue = prevScore + direction * step;
+                    let y = yScale.getPixelForValue(Math.max(Y_MIN, Math.min(Y_MAX, stepValue))) + POINT_OFFSET_Y;
+                    y = Math.min(Math.max(y, halfPoint), maxY);
+
+                    centers.push({ x, y });
+
+                    const point = document.createElement('div');
+                    point.className = 'chart-point';
+                    point.style.width = `${pointSize}px`;
+                    point.style.height = `${pointSize}px`;
+                    point.style.fontSize = `${Math.round(pointSize * 0.63)}px`;
+                    point.textContent = event.type === 'smiley' ? '😊' : '😠';
+                    point.style.left = `${x}px`;
+                    point.style.top = `${y}px`;
+                    point.style.backgroundColor = state.noteColors[resolveReason(event.type, event.reason)] || '#cccccc';
+                    point.addEventListener('click', () => viewEventDetails(event));
+
+                    chartWrapper.appendChild(point);
+                }
+            });
+
+            // Draw the connecting line through the markers' actual centers
+            // (not the chart's raw un-offset values) so it visually touches
+            // every emoji, including the fine-tune offset applied above.
+            updateConnectorLine(centers);
+        }
+
+        // Render a polyline through the given {x, y} pixel centers, linking
+        // each new emoji to the one before it.
+        function updateConnectorLine(points) {
+            const svg = document.getElementById('connector-svg');
+            if (!svg) return;
+
+            svg.innerHTML = '';
+            if (points.length < 2) return;
+
+            const ns = 'http://www.w3.org/2000/svg';
+            const polyline = document.createElementNS(ns, 'polyline');
+            polyline.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
+            polyline.setAttribute('stroke-width', '3');
+            polyline.setAttribute('stroke-linecap', 'round');
+            polyline.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(polyline);
+        }
+
+        // Add prize lines to the chart
+        function addPrizeLines() {
+            // Remove existing prize lines
+            const existingLines = document.querySelectorAll('.prize-line');
+            existingLines.forEach(line => line.remove());
+
+            const chart = state.chart;
+            const yScale = chart.scales.y;
+
+            state.prizes.forEach(prize => {
+                const y = yScale.getPixelForValue(Math.max(Y_MIN, Math.min(Y_MAX, prize.requirement)));
+
+                const line = document.createElement('div');
+                line.className = 'prize-line';
+                line.style.top = `${y}px`;
+                line.style.borderTop = `2px dashed ${prize.color}`;
+
+                const label = document.createElement('div');
+                label.className = 'prize-label';
+                label.textContent = prize.name;
+                label.style.backgroundColor = prize.color;
+                label.style.color = getContrastColor(prize.color);
+                label.title = 'Double-click to edit this prize';
+                bindTapAndDoubleTap(label, null, isChildView() ? null : () => openPrizeModal(prize.id));
+
+                line.appendChild(label);
+                chartWrapper.appendChild(line);
+            });
+        }
+
+        // Add zero line to the chart
+        function addZeroLine() {
+            // Remove existing zero line
+            const existingZeroLine = document.querySelector('.zero-line');
+            if (existingZeroLine) existingZeroLine.remove();
+
+            const chart = state.chart;
+            const yScale = chart.scales.y;
+            const y = yScale.getPixelForValue(0);
+
+            const zeroLine = document.createElement('div');
+            zeroLine.className = 'zero-line';
+            zeroLine.style.top = `${y}px`;
+
+            chartWrapper.appendChild(zeroLine);
+        }
+
+        // Rebuild the sticky y-axis number column so it matches the chart's
+        // current scale. Reuses Chart.js's own generated ticks so the
+        // numbers line up exactly with the (hidden) canvas gridlines.
+        function updateYAxisLabels() {
+            yAxisSticky.innerHTML = '<div class="y-axis-bg"></div>';
+
+            const yScale = state.chart.scales.y;
+            if (!yScale || !yScale.ticks) return;
+
+            yScale.ticks.forEach(tick => {
+                const y = yScale.getPixelForValue(tick.value);
+                const label = document.createElement('div');
+                label.className = 'y-axis-label' + (tick.value === 0 ? ' y-axis-label-zero' : '');
+                label.textContent = tick.value;
+                label.style.top = `${y}px`;
+                yAxisSticky.appendChild(label);
+            });
+        }
+
+        // Update prizes display
+        function updatePrizesDisplay() {
+            prizesContainer.innerHTML = '';
+            const currentGoodwill = state.children[state.currentChild].score;
+
+            // Nothing to show (and no strip of empty padding) until the
+            // first prize is created.
+            prizesSection.style.display = state.prizes.length ? '' : 'none';
+
+            state.prizes.forEach(prize => {
+                const prizeElement = document.createElement('div');
+                prizeElement.className = 'prize-item';
+                prizeElement.style.borderLeftColor = prize.color;
+
+                // Calculate progress percentage (current goodwill relative to requirement)
+                const progressPercent = Math.min(Math.max((currentGoodwill / prize.requirement) * 100, 0), 100);
+
+                prizeElement.innerHTML = `
+                    <div class="prize-name" data-prize-id="${prize.id}" title="Double-click to edit">${prize.name}</div>
+                    <div class="prize-progress">
+                        <div class="prize-progress-bar" style="width: ${progressPercent}%"></div>
+                        <div class="prize-progress-marker" style="left: ${Math.min(Math.max((prize.requirement / Y_MAX) * 100, 0), 100)}%"></div>
+                    </div>
+                    <div class="prize-icon">🎁</div>
+                `;
+
+                prizesContainer.appendChild(prizeElement);
+            });
+
+            // Double-clicking a prize's label opens its editor (name + goodwill
+            // requirement) in place of the old separate Edit button.
+            document.querySelectorAll('.prize-name').forEach(nameEl => {
+                const prizeId = parseInt(nameEl.dataset.prizeId);
+                bindTapAndDoubleTap(nameEl, null, isChildView() ? null : () => openPrizeModal(prizeId));
+            });
+        }
+
+        // Update all display elements
+        function updateDisplay() {
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

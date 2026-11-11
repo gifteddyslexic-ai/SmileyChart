@@ -1131,37 +1131,118 @@
         // behaviour history) to shared artifact storage, so it survives a
         // refresh and is visible from any device that opens this same page.
         // Writes are debounced so rapid changes don't spam the storage API.
+        //
+        // Two copies are kept so a single failure can't wipe the data:
+        //   1. shared artifact storage (cross-device), debounced; and
+        //   2. a local backup in this browser's localStorage, written
+        //      immediately and synchronously on every change, so closing
+        //      the app a moment after an edit can't lose it, and so the
+        //      data still persists if shared storage isn't available at all.
+        // Each copy carries a savedAt timestamp; on load the newest wins.
+        const LOCAL_KEY = STORAGE_KEY + ':local';
         let saveTimer = null;
+        let sharedLoadConfirmed = false;   // true once shared storage has answered a load
+        let lastSavedAt = 0;
+        let lastLoadedSavedAt = -1;        // savedAt of the data this session loaded (-1 = nothing loaded)
+
+        function buildPayload() {
+            lastSavedAt = Date.now();
+            return JSON.stringify({
+                savedAt: lastSavedAt,
+                children: state.children,
+                prizes: state.prizes,
+                noteHistory: state.noteHistory,
+                noteColors: state.noteColors,
+                reasonAliases: state.reasonAliases,
+                nextChildId: state.nextChildId
+            });
+        }
+
+        // Synchronous local backup. Returns true if it was written.
+        function saveLocalBackup(json) {
+            try {
+                localStorage.setItem(LOCAL_KEY, json);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
         function scheduleSave() {
+            // Local copy goes out right now - it's synchronous and cheap.
+            const json = buildPayload();
+            const localOk = saveLocalBackup(json);
+            updateSaveWarning(localOk || !!window.storage);
+
+            // Shared copy is debounced so rapid edits don't spam the API.
             if (saveTimer) clearTimeout(saveTimer);
             saveTimer = setTimeout(persistState, 600);
         }
 
+        // Called when the page is being hidden/closed: write everything
+        // immediately instead of waiting out the debounce.
+        function flushSave() {
+            if (!saveTimer) return;
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            persistState();
+        }
+
         async function persistState() {
-            if (!window.storage) return; // not running in an environment with storage
+            saveTimer = null;
+            const json = buildPayload();
+            saveLocalBackup(json);
+            if (!window.storage) return; // shared storage not available here; local backup still holds the data
             try {
-                const payload = {
-                    children: state.children,
-                    prizes: state.prizes,
-                    noteHistory: state.noteHistory,
-                    noteColors: state.noteColors,
-                    reasonAliases: state.reasonAliases,
-                    nextChildId: state.nextChildId
-                };
-                await window.storage.set(STORAGE_KEY, JSON.stringify(payload), true);
+                // If shared storage never answered our load (e.g. a transient
+                // error), don't blindly overwrite what may already be there
+                // with a possibly-default state: re-check it first.
+                if (!sharedLoadConfirmed) {
+                    const existing = await readSharedData();
+                    if (existing && (existing.savedAt || 0) > lastLoadedSavedAt) {
+                        // Real saved data is there that we never loaded: adopt
+                        // it rather than overwrite it.
+                        applyLoadedData(existing, false);
+                        renderChildTabs();
+                        updateDisplay();
+                        return;
+                    }
+                }
+                await window.storage.set(STORAGE_KEY, json, true);
+                sharedLoadConfirmed = true;
             } catch (err) {
                 console.error('Could not save family data:', err);
             }
         }
 
-        // Returns true if saved data was found and loaded.
-        async function loadPersistedState() {
-            if (!window.storage) return false;
+        function readLocalBackup() {
+            try {
+                const raw = localStorage.getItem(LOCAL_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        async function readSharedData() {
+            if (!window.storage) return null;
             try {
                 const result = await window.storage.get(STORAGE_KEY, true);
-                if (!result || !result.value) return false;
-                const data = JSON.parse(result.value);
+                sharedLoadConfirmed = true;
+                if (!result || !result.value) return null;
+                return JSON.parse(result.value);
+            } catch (err) {
+                // Either nothing is saved yet or storage hiccupped; the
+                // local backup (if any) covers the second case.
+                return null;
+            }
+        }
 
+        // Applies a saved payload to the live state. `isLocal` says whether it
+        // came from the local backup (true) or shared storage (false).
+        function applyLoadedData(data, isLocal) {
+            lastLoadedSavedAt = data.savedAt || 0;
+            try {
                 if (data.children) {
                     Object.values(data.children).forEach(child => {
                         child.events = (child.events || []).map(ev => ({ ...ev, date: new Date(ev.date) }));
@@ -1178,12 +1259,56 @@
                 if (ids.length && !ids.includes(state.currentChild)) {
                     state.currentChild = Math.min(...ids);
                 }
+
+                // Keep the local backup in step with whatever we just loaded
+                // (same savedAt), so a stale local copy can never out-rank
+                // newer shared data on the next open.
+                if (!isLocal) saveLocalBackup(JSON.stringify(data));
+
+                // If the local backup was newer than shared storage, push it
+                // back up so the shared copy catches up.
+                if (isLocal && window.storage) scheduleSave();
                 return true;
             } catch (err) {
-                // Nothing saved yet (or storage unavailable) - fine, defaults stand.
                 return false;
             }
         }
+
+        // Returns true if saved data was found and loaded.
+        async function loadPersistedState() {
+            const shared = await readSharedData();
+            const local = readLocalBackup();
+
+            // Whichever copy was saved most recently is the truth.
+            if (shared && local) {
+                return (local.savedAt || 0) > (shared.savedAt || 0)
+                    ? applyLoadedData(local, true)
+                    : applyLoadedData(shared, false);
+            }
+            if (shared) return applyLoadedData(shared, false);
+            if (local) return applyLoadedData(local, true);
+            return false;
+        }
+
+        // Visible warning for the worst case - nothing can store data here -
+        // so a parent is never silently losing their child's information.
+        function updateSaveWarning(canSave) {
+            let bar = document.getElementById('save-warning');
+            if (canSave) { if (bar) bar.remove(); return; }
+            if (bar) return;
+            bar = document.createElement('div');
+            bar.id = 'save-warning';
+            bar.style.cssText = 'background:#fff3cd;color:#664d03;border-bottom:1px solid #ffe69c;padding:8px 12px;font-size:13px;text-align:center;';
+            bar.textContent = "⚠️ This browser can't save your data, so it will be lost when you close the app. Try opening SmileyChart in a regular browser tab (not a private/incognito window) or from the app's original link.";
+            document.body.insertBefore(bar, document.body.firstChild);
+        }
+
+        // Save the moment the app is hidden, backgrounded or closed. On phones
+        // the page can be killed right after switching away, so waiting for
+        // the debounce timer isn't safe.
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+        window.addEventListener('pagehide', flushSave);
+        window.addEventListener('beforeunload', flushSave);
 
         // --- Child access codes --------------------------------------------
         // Lets a child view their own chart read-only on a separate device,
@@ -1247,6 +1372,11 @@
             // that open this same page) before rendering anything.
             await loadPersistedState();
             ensureChildCodes();
+            // Probe (with a throwaway key, so no real data is touched) whether
+            // anything here can store data, and warn visibly if not.
+            let localWritable = false;
+            try { localStorage.setItem('__smileychart_probe', '1'); localStorage.removeItem('__smileychart_probe'); localWritable = true; } catch (err) {}
+            updateSaveWarning(!!window.storage || localWritable);
 
             // Child tabs (including the trailing "+" add-child tab) are
             // built dynamically since the number of children can grow.

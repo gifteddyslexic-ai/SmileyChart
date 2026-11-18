@@ -679,9 +679,82 @@
             margin: var(--space-4) 0 var(--space-2);
         }
 
-        .heatmap-wrap {
-            max-height: 420px;
-            overflow-y: auto;
+        /* Month view: one month per "page", side by side, swipe sideways. */
+        .heatmap-wrap.month-mode {
+            display: flex;
+            gap: var(--space-4);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+            padding-bottom: 4px;
+        }
+
+        .heatmap-wrap.month-mode .hm-month {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            margin-bottom: 0;
+        }
+
+        .hm-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-2);
+        }
+
+        .hm-nav-btn {
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .hm-nav-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+        .hm-nav-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* 90 days / All: small month calendars in a grid, like a year planner. */
+        .heatmap-wrap.year-mode {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+            gap: 14px 12px;
+        }
+
+        .year-mode .hm-month { margin-bottom: 0; }
+
+        .year-mode .hm-month-title {
+            flex-direction: column;
+            align-items: flex-start;
+            font-size: 12px;
+        }
+
+        .year-mode .hm-month-sum { font-size: 10px; }
+
+        .year-mode .heatmap {
+            grid-template-columns: repeat(7, minmax(0, 1fr)) 20px;
+            grid-auto-rows: 17px;
+            gap: 2px;
+        }
+
+        .year-mode .heatmap .hm-cell {
+            height: 17px;
+            font-size: 8.5px;
+            border-radius: 3px;
+        }
+
+        .year-mode .heatmap .hm-head,
+        .year-mode .hm-weektotal {
+            font-size: 8px;
         }
 
         /* Month calendars: Monday to Sunday across, one row per week,
@@ -962,6 +1035,8 @@
             body.printing-report .report-table-wrap { max-height: none; overflow: visible; }
             body.printing-report .report-table th { position: static; }
             body.printing-report .heatmap-wrap { overflow: visible; max-height: none; }
+            body.printing-report .heatmap-wrap.month-mode { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            body.printing-report .heatmap-wrap.year-mode { grid-template-columns: repeat(4, 1fr); }
             body.printing-report * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body.printing-report .report-section { break-inside: avoid; }
         }
@@ -2784,20 +2859,34 @@
             // Month-by-month calendars: Mon-Sun across, one row per week. Each day
             // is coloured by its net goodwill, each week row ends with that week's
             // net, and each month's heading shows the month's totals.
+            // 7 and 30 days: one big month at a time, swipe sideways to earlier
+            // months (all logged days shown). 90 days and All: every month in the
+            // period as small calendars side by side, like a year planner.
+            const yearMode = reportDays === 0 || reportDays >= 90;
             const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
-            const inRange = (d) => d >= heatStart && d <= today;
+            const allDays = {};
+            child.events.forEach(ev => {
+                const k = dayKey(ev.date);
+                allDays[k] = allDays[k] || { s: 0, g: 0, net: 0 };
+                if (ev.scoreChange > 0) allDays[k].s++; else allDays[k].g++;
+                allDays[k].net += ev.scoreChange;
+            });
+            const firstEver = child.events.length ? startOfDay(child.events[0].date) : today;
+            const calStart = yearMode ? heatStart : (firstEver < yearAgo ? yearAgo : firstEver);
+            const shownFrom = yearMode ? heatStart : new Date(calStart.getFullYear(), calStart.getMonth(), 1);
+            const inRange = (d) => d >= shownFrom && d <= today;
             let months = '';
-            for (let m = new Date(heatStart.getFullYear(), heatStart.getMonth(), 1); m <= today; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
+            for (let m = new Date(calStart.getFullYear(), calStart.getMonth(), 1); m <= today; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
                 const daysInMonth = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
                 let mS = 0, mG = 0, mNet = 0;
-                let cells = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].reduce((acc, d) => acc + `<span class="hm-head">${d}</span>`, '') + '<span class="hm-head">Week</span>';
+                let cells = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].reduce((acc, d) => acc + `<span class="hm-head">${d}</span>`, '') + `<span class="hm-head">${yearMode ? 'Wk' : 'Week'}</span>`;
                 const lead = (m.getDay() + 6) % 7;
                 for (let i = 0; i < lead; i++) cells += '<span class="hm-cell out"></span>';
                 let weekNet = 0, weekHasDays = false;
                 for (let day = 1; day <= daysInMonth; day++) {
                     const d = new Date(m.getFullYear(), m.getMonth(), day);
                     const label = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-                    const info = byDay[dayKey(d)];
+                    const info = allDays[dayKey(d)];
                     if (!inRange(d)) {
                         cells += `<span class="hm-cell future">${day}</span>`;
                     } else if (!info) {
@@ -2818,15 +2907,18 @@
                         weekNet = 0; weekHasDays = false;
                     }
                 }
-                const monthName = m.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+                const monthName = m.toLocaleDateString(undefined, { month: yearMode ? 'short' : 'long', year: 'numeric' });
                 const monthSummary = (mS || mG) ? `${mS} 🙂 · ${mG} ☹️ · net ${signed(mNet)}` : 'Nothing logged';
                 months += `<div class="hm-month"><div class="hm-month-title"><span>${monthName}</span><span class="hm-month-sum">${monthSummary}</span></div><div class="heatmap">${cells}</div></div>`;
             }
-            html += `<div class="heatmap-wrap" id="heatmap-wrap">${months}</div>`;
+            if (!yearMode) {
+                html += `<div class="hm-nav report-no-print"><button class="hm-nav-btn" id="hm-prev">‹ Earlier</button><span class="hm-nav-hint">Swipe for earlier months</span><button class="hm-nav-btn" id="hm-next">Later ›</button></div>`;
+            }
+            html += `<div class="heatmap-wrap ${yearMode ? 'year-mode' : 'month-mode'}" id="heatmap-wrap">${months}</div>`;
             html += `<div class="heatmap-legend"><span>Lost goodwill</span>`;
             [-3, -2, -1, 0, 1, 2, 3].forEach(v => { html += `<span class="hm-cell" style="background:${heatColor(v)}"></span>`; });
             html += `<span>Gained goodwill</span><span style="margin-left:8px" class="hm-cell empty"></span><span>Nothing logged</span></div>`;
-            if (heatStart > rangeStart) html += `<div class="report-empty">Showing the last 12 months.</div>`;
+            if (yearMode && heatStart > rangeStart) html += `<div class="report-empty">Showing the last 12 months.</div>`;
             html += `<div class="heatmap-info report-no-print" id="heatmap-info">Tap a day to see its details.</div></div>`;
 
             // Progress towards prizes
@@ -2875,9 +2967,22 @@
 
             reportContent.innerHTML = html;
 
-            // Newest week at the bottom: start scrolled there.
+            // Month view: start on the current month (the right-hand end) and
+            // let the arrows step one month at a time.
             const hmWrap = document.getElementById('heatmap-wrap');
-            if (hmWrap) hmWrap.scrollTop = hmWrap.scrollHeight;
+            if (hmWrap && hmWrap.classList.contains('month-mode')) {
+                hmWrap.scrollLeft = hmWrap.scrollWidth;
+                const prev = document.getElementById('hm-prev');
+                const next = document.getElementById('hm-next');
+                const syncNav = () => {
+                    prev.disabled = hmWrap.scrollLeft <= 2;
+                    next.disabled = hmWrap.scrollLeft >= hmWrap.scrollWidth - hmWrap.clientWidth - 2;
+                };
+                prev.addEventListener('click', () => hmWrap.scrollBy({ left: -hmWrap.clientWidth, behavior: 'smooth' }));
+                next.addEventListener('click', () => hmWrap.scrollBy({ left: hmWrap.clientWidth, behavior: 'smooth' }));
+                hmWrap.addEventListener('scroll', syncNav, { passive: true });
+                syncNav();
+            }
 
             reportContent.querySelectorAll('.heatmap .hm-cell:not(.out):not(.future)').forEach(cell => {
                 cell.addEventListener('click', () => {

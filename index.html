@@ -343,6 +343,7 @@
         }
 
         .chart-container {
+            touch-action: pan-x pan-y; /* two-finger pinch is handled by the app (grid zoom) */
             height: 300px;
             position: relative;
             border: 1px solid var(--primary);
@@ -463,11 +464,441 @@
         }
 
         .btn-prize {
-            flex: 0 0 48px;
+            flex: 0 0 42px;
             padding: var(--space-2);
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
             color: white;
             box-shadow: 0 2px 6px rgba(13, 43, 90, 0.35);
+        }
+
+        .controls {
+            gap: 6px;
+        }
+
+        .controls .btn-icon {
+            font-size: 16px;
+        }
+
+        .controls .btn {
+            min-width: 0;
+            padding-left: var(--space-2);
+            padding-right: var(--space-2);
+        }
+
+        .ur-icon {
+            width: 22px;
+            height: 22px;
+            display: block;
+        }
+
+        .btn-undo {
+            flex: 0 0 36px;
+            padding: var(--space-2);
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            font-size: 18px;
+        }
+
+        .btn-undo:disabled {
+            opacity: 0.35;
+            cursor: default;
+            transform: none;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%) translateY(20px);
+            max-width: calc(100% - 32px);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            background: #1f2533;
+            color: white;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 300;
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast-action {
+            background: none;
+            border: none;
+            color: #FDD835;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+
+        .modal-btn-danger {
+            background-color: #fdecea;
+            color: var(--red-dark);
+        }
+
+        /* ---------- Report dashboard ---------- */
+        .report-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: var(--bg);
+            z-index: 150;
+            overflow-y: auto;
+            padding: var(--space-4);
+        }
+
+        .report-overlay.visible {
+            display: block;
+        }
+
+        .report-card {
+            max-width: 560px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 6px 20px rgba(13, 43, 90, 0.12);
+            overflow: hidden;
+        }
+
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .report-header h2 {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .report-body {
+            padding: var(--space-4);
+        }
+
+        .report-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+
+        .report-select {
+            flex: 1 1 140px;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: white;
+        }
+
+        .report-periods {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .report-period {
+            border: none;
+            background: white;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-right: 1px solid var(--border);
+        }
+
+        .report-period:last-child { border-right: none; }
+
+        .report-period.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .report-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-3);
+        }
+
+        .report-tiles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .report-tile {
+            background: #f6f8fb;
+            border-radius: var(--radius-md);
+            padding: var(--space-2);
+            text-align: center;
+        }
+
+        .report-tile-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+
+        .report-tile-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .report-note {
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: var(--space-4);
+        }
+
+        .report-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin: var(--space-4) 0 var(--space-2);
+        }
+
+        .heatmap-wrap {
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        /* Calendar layout: one row per week, Monday to Sunday across. */
+        .heatmap {
+            display: grid;
+            grid-template-columns: 52px repeat(7, 26px);
+            grid-auto-rows: 22px;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .heatmap .hm-head {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .heatmap .hm-week {
+            font-size: 10px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .heatmap .hm-cell {
+            width: 26px;
+            height: 22px;
+        }
+
+        .hm-cell {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .hm-cell.empty {
+            background: white;
+            box-shadow: inset 0 0 0 1px #dfe3ea;
+        }
+
+        .hm-cell.out {
+            visibility: hidden;
+        }
+
+        .hm-cell.selected {
+            outline: 2px solid var(--primary-dark);
+            outline-offset: 1px;
+        }
+
+        .gw-sliders {
+            display: grid;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .gw-slider-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .gw-slider-top strong { color: var(--primary-dark); }
+
+        .gw-slider-detail { color: var(--text-muted); }
+
+        .gw-track {
+            position: relative;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #d32f2f 0%, #f57c00 30%, #fbc02d 50%, #9ccc65 70%, #2e7d32 100%);
+        }
+
+        .gw-track.none { opacity: 0.35; }
+
+        .gw-marker {
+            position: absolute;
+            top: 50%;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary-dark);
+            transform: translate(-50%, -50%);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            font-size: 12px;
+            line-height: 16px;
+            text-align: center;
+        }
+
+        .gw-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        .heatmap-legend .hm-cell { cursor: default; }
+
+        .heatmap-info {
+            font-size: 13px;
+            min-height: 20px;
+            margin-top: var(--space-2);
+            color: var(--text);
+        }
+
+        .rbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 66px;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 13px;
+            padding: 3px 0;
+        }
+
+        .rbar-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rbar-track {
+            height: 10px;
+            background: #eef1f5;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .rbar-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+
+        .rbar-value {
+            white-space: nowrap;
+            text-align: right;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .report-empty {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: var(--space-2) 0;
+        }
+
+        .report-table-wrap {
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .report-table th, .report-table td {
+            text-align: left;
+            padding: 5px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-table th {
+            position: sticky;
+            top: 0;
+            background: #f6f8fb;
+            font-weight: 700;
+        }
+
+        .report-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-top: var(--space-4);
+        }
+
+        .report-actions .modal-btn {
+            flex: 1 1 140px;
+            font-size: 14px;
+            padding: var(--space-2) var(--space-3);
+        }
+
+        .print-only { display: none; }
+
+        @media print {
+            @page { size: A4; margin: 14mm; }
+            body.printing-report { background: white; padding: 0; }
+            body.printing-report > *:not(#report-overlay) { display: none !important; }
+            body.printing-report #report-overlay { display: block; position: static; padding: 0; overflow: visible; background: white; }
+            body.printing-report .report-card { box-shadow: none; max-width: none; }
+            body.printing-report .report-no-print { display: none !important; }
+            body.printing-report .print-only { display: block; }
+            body.printing-report .report-table-wrap { max-height: none; overflow: visible; }
+            body.printing-report .report-table th { position: static; }
+            body.printing-report .heatmap-wrap { overflow: visible; max-height: none; }
+            body.printing-report * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body.printing-report .report-section { break-inside: avoid; }
         }
 
         .btn:hover {
@@ -759,6 +1190,86 @@
             text-align: center;
         }
 
+        .quick-note-add {
+            background-color: white;
+            color: var(--primary);
+            border: 2px dashed var(--primary);
+            font-weight: 600;
+        }
+
+        .quick-note-edit-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+        }
+
+        .quick-note-delete {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background-color: #f0f2f5;
+            color: var(--red-dark);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .behaviour-type-toggle {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        .behaviour-type-btn {
+            flex: 1;
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background-color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .behaviour-type-btn.active.smiley {
+            border-color: var(--green);
+            background-color: #e8f5e9;
+        }
+
+        .behaviour-type-btn.active.grumpy {
+            border-color: var(--red);
+            background-color: #fdecea;
+        }
+
+        .suggestion-group-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin: var(--space-3) 0 var(--space-2);
+        }
+
+        .suggestion-chip {
+            background-color: #f0f4f8;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 6px var(--space-3);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .suggestion-chip.selected {
+            border-color: var(--primary);
+            background-color: #dde7f5;
+        }
+
+        .suggestion-chip:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
         .quick-note:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
@@ -849,9 +1360,9 @@
 <body>
     <div class="container">
         <div class="banner">
-            <span class="banner-emoji">😊</span>
+            <span class="banner-emoji">🙂</span>
             <div class="banner-text">SmileyChart</div>
-            <span class="banner-emoji">😠</span>
+            <span class="banner-emoji">☹️</span>
         </div>
 
         <div class="child-view-banner" id="child-view-banner">
@@ -869,6 +1380,7 @@
             <div class="child-tab-menu" id="child-tab-menu">
                 <button class="child-tab-menu-item" id="menu-share-codes">🔗 Share Codes</button>
                 <button class="child-tab-menu-item" id="menu-child-view">👀 Child View</button>
+                <button class="child-tab-menu-item" id="menu-report">📊 Report</button>
             </div>
 
             <div class="chart-container" id="chart-container">
@@ -883,13 +1395,15 @@
 
             <div class="controls">
                 <button class="btn btn-smiley" id="smiley-btn">
-                    <span class="btn-icon">😊</span>
+                    <span class="btn-icon">🙂</span>
                     Smiley
                 </button>
                 <button class="btn btn-grumpy" id="grumpy-btn">
-                    <span class="btn-icon">😠</span>
+                    <span class="btn-icon">☹️</span>
                     Grumpy
                 </button>
+                <button class="btn btn-undo" id="undo-btn" title="Undo the last Smiley or Grumpy" aria-label="Undo"><svg class="ur-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 12.6A8 8 0 1 0 12.2 4.6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M7.4 4.6L13.4 0.2V9Z" fill="currentColor"/></svg></button>
+                <button class="btn btn-undo" id="redo-btn" title="Redo" aria-label="Redo"><svg class="ur-icon" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(24 0) scale(-1 1)"><path d="M4.2 12.6A8 8 0 1 0 12.2 4.6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M7.4 4.6L13.4 0.2V9Z" fill="currentColor"/></g></svg></button>
                 <button class="btn btn-prize" id="add-prize-btn" title="Add a prize" aria-label="Add a prize">
                     <span class="btn-icon">🎁</span>
                 </button>
@@ -939,6 +1453,56 @@
         </div>
     </div>
 
+    <!-- Modal for adding a behaviour to the list without logging an event -->
+    <div class="modal" id="behaviour-modal">
+        <div class="modal-content">
+            <div class="modal-title">Add a Behaviour</div>
+            <div class="behaviour-type-toggle">
+                <button type="button" class="behaviour-type-btn smiley" id="behaviour-type-smiley">🙂 Builds goodwill</button>
+                <button type="button" class="behaviour-type-btn grumpy" id="behaviour-type-grumpy">☹️ Loses goodwill</button>
+            </div>
+            <input type="text" class="modal-input" id="behaviour-input" placeholder="Type your own…">
+            <div id="behaviour-suggestions"></div>
+            <div class="modal-buttons" style="margin-top: var(--space-4);">
+                <button class="modal-btn modal-btn-cancel" id="cancel-behaviour-btn">Cancel</button>
+                <button class="modal-btn modal-btn-save" id="save-behaviour-btn">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Small notice with an Undo / Redo action -->
+    <div class="toast" id="toast" role="status" aria-live="polite">
+        <span id="toast-text"></span>
+        <button class="toast-action" id="toast-action"></button>
+    </div>
+
+    <!-- Parent report dashboard -->
+    <div class="report-overlay" id="report-overlay">
+        <div class="report-card">
+            <div class="report-header">
+                <h2>📊 Goodwill Report</h2>
+                <button class="toolbar-btn-inverse report-no-print" id="close-report-btn">Close</button>
+            </div>
+            <div class="report-body">
+                <div class="report-filters report-no-print">
+                    <select class="report-select" id="report-child" aria-label="Child"></select>
+                    <div class="report-periods" id="report-periods">
+                        <button class="report-period" data-days="7">7 days</button>
+                        <button class="report-period" data-days="30">30 days</button>
+                        <button class="report-period" data-days="90">90 days</button>
+                        <button class="report-period" data-days="0">All</button>
+                    </div>
+                </div>
+                <div id="report-content"></div>
+                <div class="report-actions report-no-print">
+                    <button class="modal-btn modal-btn-cancel" id="export-child-btn">⬇️ Export CSV</button>
+                    <button class="modal-btn modal-btn-cancel" id="export-all-btn">⬇️ Export all children</button>
+                    <button class="modal-btn modal-btn-save" id="print-report-btn">🖨️ Print / Save PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal for viewing notes -->
     <div class="modal" id="view-modal">
         <div class="modal-content">
@@ -947,6 +1511,7 @@
                 <!-- Content will be dynamically added -->
             </div>
             <div class="modal-buttons">
+                <button class="modal-btn modal-btn-danger" id="delete-event-btn">Delete</button>
                 <button class="modal-btn modal-btn-cancel" id="close-view-btn">Close</button>
             </div>
         </div>
@@ -1029,6 +1594,9 @@
             noteHistory: [],
             noteColors: {},
             reasonAliases: {},
+            // Set once the starter behaviours have been offered, so renamed or
+            // deleted defaults never come back (e.g. after an update).
+            defaultsSeeded: false,
             // Smileys progress through a warm yellow -> green gradient, with each
             // step chosen for clear visual separation from its neighbours
             smileyColors: [
@@ -1117,13 +1685,57 @@
         }
         const DEFAULT_BOTTOM_VALUE = -2; // the goodwill value that sits at the bottom edge of the chart window by default
 
+        // --- Grid zoom (pinch, or ctrl/trackpad-pinch + wheel) ---------------
+        // One grid square is COLUMN_WIDTH x PIXELS_PER_UNIT at zoom 1; zooming
+        // scales the square, the emoji and their offsets together. The level
+        // is remembered per device (it is a viewing preference, not family data).
+        const ZOOM_MIN = 0.25;
+        const ZOOM_MAX = 1.75;
+        const ZOOM_KEY = 'smileychart-zoom';
+        let gridZoom = 1;
+        try {
+            const savedZoom = parseFloat(localStorage.getItem(ZOOM_KEY));
+            if (savedZoom >= ZOOM_MIN && savedZoom <= ZOOM_MAX) gridZoom = savedZoom;
+        } catch (err) {}
+        function cellSize() { return COLUMN_WIDTH * gridZoom; }
+        function unitHeight() { return PIXELS_PER_UNIT * gridZoom; }
+
         // Point diameter matches the CSS breakpoint so spacing math stays in sync
         function getPointSize() {
-            return window.innerWidth <= 380 ? 26 : 30;
+            return Math.max(6, Math.round((window.innerWidth <= 380 ? 26 : 30) * gridZoom));
+        }
+
+        // Suggested behaviours, grouped by age. Each one names something the
+        // child did, never a label for the child. 'build' earns a Smiley,
+        // 'lose' earns a Grumpy.
+        const BEHAVIOUR_SUGGESTIONS = [
+            { age: 'Ages 3–6',
+              build: ['Shared a toy', 'Said please or thank you', 'Tidied up when asked', 'Listened first time', 'Was kind to someone', 'Went to bed nicely'],
+              lose: ['Hit or pushed', 'Screamed or shouted', 'Ignored being asked', 'Snatched something', 'Had a big tantrum'] },
+            { age: 'Ages 7–11',
+              build: ['Helped without being asked', 'Did homework without a fuss', 'Told the truth when it was hard', 'Sorted out an argument calmly', 'Helped at mealtimes', 'Got ready on time'],
+              lose: ['Told a lie', 'Was rude or answered back', 'Screen time past the limit', 'Was unkind to a sibling', 'Ignored being asked several times'] },
+            { age: 'Ages 12+',
+              build: ['Kept us posted on where they were', 'Did their jobs without a reminder', 'Talked something through calmly', 'Looked out for a younger sibling', 'Came home on time'],
+              lose: ['Slammed doors or stormed off', "Wasn't honest about where they were", 'Was disrespectful', 'Broke a screen or curfew agreement', 'Refused to help'] }
+        ];
+
+        // Starter set for a brand-new family: the first 4 builders and the
+        // first 3 losers from the middle (7–11) age group.
+        function seedDefaultBehaviours() {
+            if (state.defaultsSeeded) return;
+            state.defaultsSeeded = true;
+            // A family that already has behaviours of its own keeps just those.
+            if (state.noteHistory.length) return;
+            const middle = BEHAVIOUR_SUGGESTIONS[1];
+            middle.build.slice(0, 4).forEach(r => ensureBehaviour(r, 'smiley'));
+            middle.lose.slice(0, 3).forEach(r => ensureBehaviour(r, 'grumpy'));
+            // No save here: the defaults are written with the family's first
+            // real change, so simply opening the app never overwrites anything.
         }
 
         function behaviourEmoji(type) {
-            return type === 'smiley' ? '😊' : '😠';
+            return type === 'smiley' ? '🙂' : '☹️';
         }
 
         // --- Shared persistence ------------------------------------------------
@@ -1143,6 +1755,7 @@
         let saveTimer = null;
         let sharedLoadConfirmed = false;   // true once shared storage has answered a load
         let lastSavedAt = 0;
+        let lastPointCenter = null;        // {x, y} pixel centre of the most recent emoji, or null
         let lastLoadedSavedAt = -1;        // savedAt of the data this session loaded (-1 = nothing loaded)
 
         function buildPayload() {
@@ -1154,6 +1767,7 @@
                 noteHistory: state.noteHistory,
                 noteColors: state.noteColors,
                 reasonAliases: state.reasonAliases,
+                defaultsSeeded: state.defaultsSeeded,
                 nextChildId: state.nextChildId
             });
         }
@@ -1253,6 +1867,7 @@
                 if (data.noteHistory) state.noteHistory = data.noteHistory;
                 if (data.noteColors) state.noteColors = data.noteColors;
                 if (data.reasonAliases) state.reasonAliases = data.reasonAliases;
+                if (data.defaultsSeeded) state.defaultsSeeded = true;
                 if (data.nextChildId) state.nextChildId = data.nextChildId;
 
                 const ids = Object.keys(state.children).map(Number);
@@ -1372,6 +1987,7 @@
             // that open this same page) before rendering anything.
             await loadPersistedState();
             ensureChildCodes();
+            seedDefaultBehaviours();
             // Probe (with a throwaway key, so no real data is touched) whether
             // anything here can store data, and warn visibly if not.
             let localWritable = false;
@@ -1427,20 +2043,50 @@
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
-                    if (state.chart) updateChart();
+                    if (!state.chart) return;
+                    if (!chartResizedByUser) fitChartToViewport();
+                    updateChart();
                 }, 150);
             });
-
-            // Give the chart its default height based on how much of the
-            // device's screen is actually available, so the whole app fits
-            // without the page itself needing to scroll.
-            fitChartToViewport();
 
             // Initialize chart
             initChart();
 
             // Update display
             updateDisplay();
+
+            // Give the chart its default height based on how much of the
+            // device's screen is actually available, so the whole app fits
+            // without the page itself needing to scroll. This must run after
+            // the behaviours and prizes have rendered: measured before them,
+            // the chart came out too tall, the page could scroll, and the
+            // browser could reopen it scrolled down with the grid cut off.
+            fitChartToViewport();
+            window.scrollTo(0, 0);
+            updateChart(); // redraw at the final size (also centres on the last emoji)
+        }
+
+        // Never let the browser restore an old page scroll position on reopen.
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+        // Set once the parent drags the resize handle, so automatic fitting
+        // never fights a size they chose themselves.
+        let chartResizedByUser = false;
+
+        // Keeps the whole app (and so the whole grid) within the screen when
+        // content below the chart grows, e.g. a new behaviour or prize row.
+        // Only the chart's visible window shrinks; the chart itself is never
+        // resized (see the scale-corruption pitfall).
+        function keepAppOnScreen() {
+            if (chartResizedByUser || !state.chart) return;
+            const overflow = document.documentElement.scrollHeight - window.innerHeight;
+            if (overflow <= 0) return;
+            const current = chartContainer.getBoundingClientRect().height;
+            const target = Math.max(CHART_MIN_HEIGHT, Math.floor(current - overflow));
+            if (target < current) {
+                chartContainer.style.height = `${target}px`;
+                centerOnLastPoint();
+            }
         }
 
         // Sizes the chart window so the rest of the card (banner, tabs,
@@ -1756,7 +2402,7 @@
         function openNoteModal(type, presetNote = '') {
             state.currentType = type;
             const title = document.getElementById('modal-title');
-            title.textContent = `Add Note for ${type === 'smiley' ? '😊 Smiley' : '😠 Grumpy'}`;
+            title.textContent = `Add Note for ${type === 'smiley' ? '🙂 Smiley' : '☹️ Grumpy'}`;
             noteInput.value = presetNote;
             setCurrentValue(1);
             noteModal.style.display = 'flex';
@@ -1824,6 +2470,8 @@
 
                 // Add to note history
                 addToNoteHistory(reason, state.currentType);
+                redoStack = [];
+                updateUndoButton();
 
                 // Update UI
                 updateChart();
@@ -1833,11 +2481,437 @@
 
                 // Close modal
                 closeNoteModal();
+                showToast(`Added: ${describeEvent(event)}`, 'Undo', undoLast);
             } else {
                 alert("Please enter a reason for the smiley/grumpy");
                 noteInput.focus();
             }
         }
+
+        // --- Undo / redo / delete -------------------------------------------
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        const toastEl = document.getElementById('toast');
+        const toastText = document.getElementById('toast-text');
+        const toastAction = document.getElementById('toast-action');
+        let toastTimer = null;
+        let toastHandler = null;
+        let redoStack = [];       // [{ childId, event, index }] of entries removed by undo/delete
+        let viewingEvent = null;  // the entry open in the details popup
+
+        function showToast(message, actionLabel, onAction) {
+            toastText.textContent = message;
+            toastAction.textContent = actionLabel || '';
+            toastAction.style.display = actionLabel ? '' : 'none';
+            toastHandler = onAction || null;
+            toastEl.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 6000);
+        }
+
+        toastAction.addEventListener('click', () => {
+            toastEl.classList.remove('visible');
+            const handler = toastHandler;
+            toastHandler = null;
+            if (handler) handler();
+        });
+
+        function describeEvent(event) {
+            const n = Math.abs(event.scoreChange);
+            return `${behaviourEmoji(event.type)} ${resolveReason(event.type, event.reason)} (${event.scoreChange > 0 ? '+' : '−'}${n})`;
+        }
+
+        // Keep the behaviour's usage count in step when an entry is removed or restored.
+        function bumpBehaviourCount(event, delta) {
+            const reason = resolveReason(event.type, event.reason);
+            const note = state.noteHistory.find(n => n.reason === reason && n.type === event.type);
+            if (note) note.count = Math.max(0, note.count + delta);
+            else if (delta > 0) ensureBehaviour(reason, event.type).count = delta;
+            state.noteHistory.sort((a, b) => b.count - a.count);
+        }
+
+        function refreshAfterEdit() {
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+            scheduleSave();
+        }
+
+        function removeEvent(childId, event) {
+            const child = state.children[childId];
+            const index = child.events.indexOf(event);
+            if (index < 0) return null;
+            child.events.splice(index, 1);
+            child.score -= event.scoreChange;
+            bumpBehaviourCount(event, -1);
+            return { childId, event, index };
+        }
+
+        function restoreEvent(record) {
+            const child = state.children[record.childId];
+            if (!child) return;
+            child.events.splice(Math.min(record.index, child.events.length), 0, record.event);
+            child.score += record.event.scoreChange;
+            bumpBehaviourCount(record.event, 1);
+        }
+
+        function undoLast() {
+            const events = state.children[state.currentChild].events;
+            if (!events.length) return;
+            const record = removeEvent(state.currentChild, events[events.length - 1]);
+            redoStack.push(record);
+            refreshAfterEdit();
+            showToast(`Undone: ${describeEvent(record.event)}`, 'Redo', redoLast);
+        }
+
+        function redoLast() {
+            const record = redoStack.pop();
+            if (!record) return;
+            restoreEvent(record);
+            if (record.childId !== state.currentChild) selectChild(record.childId);
+            refreshAfterEdit();
+            showToast(`Restored: ${describeEvent(record.event)}`, 'Undo', undoLast);
+        }
+
+        function deleteViewedEvent() {
+            if (!viewingEvent) return;
+            const record = removeEvent(state.currentChild, viewingEvent);
+            viewingEvent = null;
+            closeViewModal();
+            if (!record) return;
+            redoStack.push(record);
+            refreshAfterEdit();
+            showToast(`Deleted: ${describeEvent(record.event)}`, 'Undo', redoLast);
+        }
+
+        function updateUndoButton() {
+            const child = state.children[state.currentChild];
+            undoBtn.disabled = !child || child.events.length === 0;
+            redoBtn.disabled = redoStack.length === 0;
+        }
+
+        undoBtn.addEventListener('click', undoLast);
+        redoBtn.addEventListener('click', redoLast);
+        document.getElementById('delete-event-btn').addEventListener('click', deleteViewedEvent);
+
+        // --- Report dashboard ---------------------------------------------
+        const reportOverlay = document.getElementById('report-overlay');
+        const reportChildSelect = document.getElementById('report-child');
+        const reportContent = document.getElementById('report-content');
+        let reportChildId = null;
+        let reportDays = 30;
+
+        // Diverging scale for a day's net goodwill: pink (lost) - grey (even) - green (gained).
+        const HEAT_COLORS = { '-3': '#c51b7d', '-2': '#de77ae', '-1': '#f1b6da', '0': '#e3e1dc', '1': '#b8e186', '2': '#7fbc41', '3': '#4d9221' };
+        function heatColor(net) {
+            return HEAT_COLORS[String(Math.max(-3, Math.min(3, net)))];
+        }
+
+        function dayKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function startOfDay(d) {
+            const x = new Date(d);
+            x.setHours(0, 0, 0, 0);
+            return x;
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function openReport(childId) {
+            reportChildId = childId || state.currentChild;
+            reportChildSelect.innerHTML = '';
+            Object.keys(state.children).map(Number).sort((a, b) => a - b).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = String(id);
+                opt.textContent = state.children[id].name;
+                reportChildSelect.appendChild(opt);
+            });
+            reportChildSelect.value = String(reportChildId);
+            reportOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+            renderReport();
+        }
+
+        function closeReport() {
+            reportOverlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        // Events with their running goodwill, optionally limited to the last `days` days.
+        function reportEntries(childId, days) {
+            const since = days ? startOfDay(new Date(Date.now() - (days - 1) * 86400000)) : null;
+            let running = 0;
+            const rows = [];
+            state.children[childId].events.forEach(ev => {
+                running += ev.scoreChange;
+                if (!since || ev.date >= since) rows.push({ ev, after: running });
+            });
+            return { rows, since };
+        }
+
+        function renderReport() {
+            const child = state.children[reportChildId];
+            const { rows, since } = reportEntries(reportChildId, reportDays);
+            document.querySelectorAll('.report-period').forEach(b => b.classList.toggle('active', Number(b.dataset.days) === reportDays));
+
+            const today = startOfDay(new Date());
+            const firstDate = rows.length ? startOfDay(rows[0].ev.date) : today;
+            let rangeStart = since || firstDate;
+            // Keep "All" to the last 12 months in the heat map so it stays readable.
+            const yearAgo = startOfDay(new Date(today.getTime() - 364 * 86400000));
+            const heatStart = rangeStart < yearAgo ? yearAgo : rangeStart;
+            const periodLabel = reportDays ? `Last ${reportDays} days` : 'All time';
+
+            let gained = 0, lost = 0, smileys = 0, grumpys = 0;
+            const byDay = {};
+            const byBehaviour = {};
+            rows.forEach(({ ev }) => {
+                if (ev.scoreChange > 0) { gained += ev.scoreChange; smileys++; } else { lost += -ev.scoreChange; grumpys++; }
+                const k = dayKey(ev.date);
+                byDay[k] = byDay[k] || { s: 0, g: 0, net: 0 };
+                if (ev.scoreChange > 0) byDay[k].s++; else byDay[k].g++;
+                byDay[k].net += ev.scoreChange;
+                const reason = resolveReason(ev.type, ev.reason);
+                const bk = `${ev.type}::${reason}`;
+                byBehaviour[bk] = byBehaviour[bk] || { type: ev.type, reason, times: 0, points: 0 };
+                byBehaviour[bk].times++;
+                byBehaviour[bk].points += Math.abs(ev.scoreChange);
+            });
+            const net = gained - lost;
+            const ratio = grumpys ? (smileys / grumpys) : null;
+
+            let html = '';
+            html += `<div class="print-only report-subtitle"><strong>${escapeHtml(child.name)}</strong> · ${periodLabel} · printed ${new Date().toLocaleDateString()}</div>`;
+            html += `<div class="report-subtitle report-no-print">${escapeHtml(child.name)} · ${periodLabel}</div>`;
+
+            // Headline numbers
+            html += `<div class="report-section"><div class="report-tiles">
+                <div class="report-tile"><div class="report-tile-value">${child.score}</div><div class="report-tile-label">Goodwill now</div></div>
+                <div class="report-tile"><div class="report-tile-value">${net > 0 ? '+' : ''}${net}</div><div class="report-tile-label">Change</div></div>
+                <div class="report-tile"><div class="report-tile-value">${smileys}</div><div class="report-tile-label">🙂 Smileys</div></div>
+                <div class="report-tile"><div class="report-tile-value">${grumpys}</div><div class="report-tile-label">☹️ Grumpys</div></div>
+            </div>`;
+            let ratioText;
+            if (!rows.length) ratioText = 'No Smileys or Grumpys in this period yet.';
+            else if (ratio === null) ratioText = `Only Smileys in this period, ${smileys} of them. Lovely.`;
+            else ratioText = `${ratio.toFixed(1)} Smileys for every Grumpy. ${ratio >= 3 ? 'Great balance: keep noticing the good.' : 'Aim for at least 3 to 1 by looking out for good moments.'}`;
+            html += `<div class="report-note">${ratioText}</div></div>`;
+
+            // Day / week / month sliders: where the balance of goodwill gained
+            // vs lost sits right now, from all red (only lost) to all green.
+            html += `<div class="report-section"><div class="report-section-title">Goodwill by day</div>`;
+            html += renderGoodwillSliders(reportChildId);
+
+            // Calendar heat map of net goodwill per day: one row per week, Mon-Sun across.
+            const gridStart = new Date(heatStart);
+            gridStart.setDate(gridStart.getDate() - ((gridStart.getDay() + 6) % 7)); // back to Monday
+            const gridEnd = new Date(today);
+            gridEnd.setDate(gridEnd.getDate() + (6 - ((gridEnd.getDay() + 6) % 7))); // on to Sunday
+            let cells = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].reduce((acc, d) => acc + `<span class="hm-head">${d}</span>`, '<span></span>');
+            const weeks = [];
+            for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+                const k = dayKey(d);
+                const label = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+                if ((d.getDay() + 6) % 7 === 0) {
+                    cells += `<span class="hm-week">${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>`;
+                }
+                if (d < heatStart || d > today) { cells += `<span class="hm-cell out"></span>`; continue; }
+                const info = byDay[k];
+                if (!info) {
+                    cells += `<button class="hm-cell empty" data-info="${escapeHtml(label)}: nothing logged" title="${escapeHtml(label)}: nothing logged"></button>`;
+                } else {
+                    const text = `${label}: ${info.s} 🙂 · ${info.g} ☹️ · net ${info.net > 0 ? '+' : ''}${info.net}`;
+                    cells += `<button class="hm-cell" style="background:${heatColor(info.net)}" data-info="${escapeHtml(text)}" title="${escapeHtml(text)}"></button>`;
+                }
+            }
+            html += `<div class="heatmap-wrap" id="heatmap-wrap"><div class="heatmap">${cells}</div></div>`;
+            html += `<div class="heatmap-legend"><span>Lost goodwill</span>`;
+            [-3, -2, -1, 0, 1, 2, 3].forEach(v => { html += `<span class="hm-cell" style="background:${heatColor(v)}"></span>`; });
+            html += `<span>Gained goodwill</span><span style="margin-left:8px" class="hm-cell empty"></span><span>Nothing logged</span></div>`;
+            if (heatStart > rangeStart) html += `<div class="report-empty">Showing the last 12 months.</div>`;
+            html += `<div class="heatmap-info report-no-print" id="heatmap-info">Tap a day to see its details.</div></div>`;
+
+            // Progress towards prizes
+            html += `<div class="report-section"><div class="report-section-title">Progress towards prizes</div>`;
+            if (!state.prizes.length) html += `<div class="report-empty">No prizes set yet. Add one with the 🎁 button.</div>`;
+            state.prizes.slice().sort((a, b) => a.requirement - b.requirement).forEach(prize => {
+                const pct = Math.max(0, Math.min(100, (child.score / prize.requirement) * 100));
+                const done = child.score >= prize.requirement;
+                html += `<div class="rbar"><span class="rbar-label">🎁 ${escapeHtml(prize.name)}</span>
+                    <span class="rbar-track"><span class="rbar-fill" style="display:block;width:${pct}%;background:${prize.color}"></span></span>
+                    <span class="rbar-value">${Math.max(0, child.score)}/${prize.requirement}${done ? ' ✓' : ''}</span></div>`;
+            });
+            html += `</div>`;
+
+            // Behaviours, as bars of how often each was given
+            const list = Object.values(byBehaviour);
+            const maxTimes = Math.max(1, ...list.map(b => b.times));
+            const section = (type, title) => {
+                const items = list.filter(b => b.type === type).sort((a, b) => b.times - a.times);
+                let out = `<div class="report-section"><div class="report-section-title">${title}</div>`;
+                if (!items.length) out += `<div class="report-empty">None in this period.</div>`;
+                items.forEach(b => {
+                    const color = state.noteColors[b.reason] || (type === 'smiley' ? '#7fbc41' : '#de77ae');
+                    out += `<div class="rbar"><span class="rbar-label" title="${escapeHtml(b.reason)}">${behaviourEmoji(type)} ${escapeHtml(b.reason)}</span>
+                        <span class="rbar-track"><span class="rbar-fill" style="display:block;width:${(b.times / maxTimes) * 100}%;background:${color}"></span></span>
+                        <span class="rbar-value">${b.times}×</span></div>`;
+                });
+                return out + `</div>`;
+            };
+            html += section('smiley', 'Behaviours that built goodwill');
+            html += section('grumpy', 'Behaviours that lost goodwill');
+
+            // Every entry, as a table (also what the printout lists)
+            html += `<div class="report-section"><div class="report-section-title">All entries</div>`;
+            if (!rows.length) {
+                html += `<div class="report-empty">No entries in this period.</div>`;
+            } else {
+                html += `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Date</th><th>Behaviour</th><th class="num">Points</th><th class="num">Goodwill</th></tr></thead><tbody>`;
+                rows.slice().reverse().forEach(({ ev, after }) => {
+                    html += `<tr><td>${escapeHtml(formatDate(ev.date))}</td><td>${behaviourEmoji(ev.type)} ${escapeHtml(resolveReason(ev.type, ev.reason))}</td>
+                        <td class="num">${ev.scoreChange > 0 ? '+' : ''}${ev.scoreChange}</td><td class="num">${after}</td></tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+            html += `</div>`;
+
+            reportContent.innerHTML = html;
+
+            // Newest week at the bottom: start scrolled there.
+            const hmWrap = document.getElementById('heatmap-wrap');
+            if (hmWrap) hmWrap.scrollTop = hmWrap.scrollHeight;
+
+            reportContent.querySelectorAll('.heatmap .hm-cell:not(.out)').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    reportContent.querySelectorAll('.hm-cell.selected').forEach(c => c.classList.remove('selected'));
+                    cell.classList.add('selected');
+                    document.getElementById('heatmap-info').textContent = cell.dataset.info;
+                });
+            });
+        }
+
+        // Totals for a child's entries on or after `from`.
+        function goodwillSince(childId, from) {
+            let gained = 0, lost = 0, smileys = 0, grumpys = 0;
+            state.children[childId].events.forEach(ev => {
+                if (ev.date < from) return;
+                if (ev.scoreChange > 0) { gained += ev.scoreChange; smileys++; }
+                else { lost += -ev.scoreChange; grumpys++; }
+            });
+            return { gained, lost, smileys, grumpys };
+        }
+
+        function renderGoodwillSliders(childId) {
+            const today = startOfDay(new Date());
+            const weekStart = new Date(today);
+            weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const rows = [
+                ['Today', today],
+                ['This week', weekStart],
+                ['This month', monthStart]
+            ];
+            let out = '<div class="gw-sliders">';
+            rows.forEach(([label, from]) => {
+                const t = goodwillSince(childId, from);
+                const total = t.gained + t.lost;
+                const net = t.gained - t.lost;
+                // Position = share of goodwill points that were gained (0% all lost, 100% all gained).
+                const pos = total ? (t.gained / total) * 100 : 50;
+                const detail = total
+                    ? `${t.smileys} 🙂 · ${t.grumpys} ☹️ · net ${net > 0 ? '+' : ''}${net}`
+                    : 'Nothing logged yet';
+                out += `<div class="gw-slider" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pos)}">
+                    <div class="gw-slider-top"><strong>${label}</strong><span class="gw-slider-detail">${detail}</span></div>
+                    <div class="gw-track${total ? '' : ' none'}"><span class="gw-marker" style="left:${pos}%">${total ? (pos >= 50 ? '🙂' : '☹️') : ''}</span></div>
+                </div>`;
+            });
+            out += '<div class="gw-scale"><span>☹️ All goodwill lost</span><span>Even</span><span>All goodwill gained 🙂</span></div></div>';
+            return out;
+        }
+
+        function csvCell(value) {
+            const text = String(value);
+            return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+        }
+
+        function buildCsv(childIds) {
+            const lines = [['Child', 'Date', 'Time', 'Type', 'Behaviour', 'Points', 'Goodwill after'].join(',')];
+            childIds.forEach(id => {
+                const child = state.children[id];
+                let running = 0;
+                child.events.forEach(ev => {
+                    running += ev.scoreChange;
+                    lines.push([
+                        child.name,
+                        dayKey(ev.date),
+                        ev.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        ev.type === 'smiley' ? 'Smiley' : 'Grumpy',
+                        resolveReason(ev.type, ev.reason),
+                        ev.scoreChange,
+                        running
+                    ].map(csvCell).join(','));
+                });
+            });
+            return lines.join('\r\n');
+        }
+
+        function downloadFile(filename, text, mime) {
+            try {
+                // BOM so Excel reads emoji and accents correctly.
+                const blob = new Blob(['\ufeff' + text], { type: mime });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                showToast(`Exported ${filename}`);
+            } catch (err) {
+                showToast("This browser couldn't download the file.");
+            }
+        }
+
+        function safeName(name) {
+            return name.replace(/[^\w\-]+/g, '-').replace(/^-+|-+$/g, '') || 'child';
+        }
+
+        function printReport() {
+            document.body.classList.add('printing-report');
+            const done = () => {
+                document.body.classList.remove('printing-report');
+                window.removeEventListener('afterprint', done);
+            };
+            window.addEventListener('afterprint', done);
+            window.print();
+            setTimeout(done, 1000);
+        }
+
+        document.getElementById('menu-report').addEventListener('click', () => {
+            const tab = tabMenuAnchor && tabMenuAnchor.closest('.child-tab');
+            closeTabMenu();
+            openReport(tab ? Number(tab.dataset.child) : state.currentChild);
+        });
+        document.getElementById('close-report-btn').addEventListener('click', closeReport);
+        reportChildSelect.addEventListener('change', () => { reportChildId = Number(reportChildSelect.value); renderReport(); });
+        document.querySelectorAll('.report-period').forEach(btn => {
+            btn.addEventListener('click', () => { reportDays = Number(btn.dataset.days); renderReport(); });
+        });
+        document.getElementById('export-child-btn').addEventListener('click', () => {
+            const child = state.children[reportChildId];
+            downloadFile(`smileychart-${safeName(child.name)}-${dayKey(new Date())}.csv`, buildCsv([reportChildId]), 'text/csv');
+        });
+        document.getElementById('export-all-btn').addEventListener('click', () => {
+            const ids = Object.keys(state.children).map(Number).sort((a, b) => a - b);
+            downloadFile(`smileychart-all-${dayKey(new Date())}.csv`, buildCsv(ids), 'text/csv');
+        });
+        document.getElementById('print-report-btn').addEventListener('click', printReport);
 
         // Save prize
         function savePrize() {
@@ -1893,39 +2967,119 @@
             return '#' + Math.floor(Math.random() * 16777215).toString(16);
         }
 
-        // Add note to history
-        function addToNoteHistory(reason, type) {
-            // Check if note already exists in history
-            const existingNote = state.noteHistory.find(note => note.reason === reason && note.type === type);
-
-            if (existingNote) {
-                existingNote.count++;
-            } else {
+        // Make sure a behaviour is on the list (with its colour), without
+        // counting a use. Returns its history entry.
+        function ensureBehaviour(reason, type) {
+            let note = state.noteHistory.find(n => n.reason === reason && n.type === type);
+            if (!note) {
                 // Assign a color if this is a new note, drawn from the type's gradient
                 if (!state.noteColors[reason]) {
                     const colorArray = type === 'smiley' ? state.smileyColors : state.grumpyColors;
                     const sameTypeCount = state.noteHistory.filter(n => n.type === type).length;
                     state.noteColors[reason] = colorArray[sameTypeCount % colorArray.length];
                 }
-
-                state.noteHistory.push({
-                    reason: reason,
-                    type: type,
-                    count: 1
-                });
+                note = { reason: reason, type: type, count: 0 };
+                state.noteHistory.push(note);
             }
+            return note;
+        }
+
+        // Add note to history
+        function addToNoteHistory(reason, type) {
+            ensureBehaviour(reason, type).count++;
 
             // Sort by count (most frequent first)
             state.noteHistory.sort((a, b) => b.count - a.count);
         }
 
+        // Remove a behaviour from the list. Events already logged with it
+        // stay on the chart, with their colour.
+        function deleteBehaviour(note) {
+            state.noteHistory = state.noteHistory.filter(n => n !== note);
+            scheduleSave();
+            updateQuickNotes();
+        }
+
+        // --- Add a Behaviour modal -------------------------------------------
+        const behaviourModal = document.getElementById('behaviour-modal');
+        const behaviourInput = document.getElementById('behaviour-input');
+        const behaviourSuggestions = document.getElementById('behaviour-suggestions');
+        const behaviourTypeSmiley = document.getElementById('behaviour-type-smiley');
+        const behaviourTypeGrumpy = document.getElementById('behaviour-type-grumpy');
+        let behaviourModalType = 'smiley';
+
+        function openBehaviourModal() {
+            behaviourInput.value = '';
+            setBehaviourModalType('smiley');
+            behaviourModal.style.display = 'flex';
+        }
+
+        function closeBehaviourModal() {
+            behaviourModal.style.display = 'none';
+        }
+
+        function setBehaviourModalType(type) {
+            behaviourModalType = type;
+            behaviourTypeSmiley.classList.toggle('active', type === 'smiley');
+            behaviourTypeGrumpy.classList.toggle('active', type === 'grumpy');
+            renderBehaviourSuggestions();
+        }
+
+        function renderBehaviourSuggestions() {
+            behaviourSuggestions.innerHTML = '';
+            const key = behaviourModalType === 'smiley' ? 'build' : 'lose';
+            const onList = new Set(state.noteHistory.filter(n => n.type === behaviourModalType).map(n => n.reason));
+            BEHAVIOUR_SUGGESTIONS.forEach(group => {
+                const title = document.createElement('div');
+                title.className = 'suggestion-group-title';
+                title.textContent = group.age;
+                behaviourSuggestions.appendChild(title);
+
+                const list = document.createElement('div');
+                list.className = 'quick-notes-list';
+                list.style.maxHeight = 'none';
+                group[key].forEach(reason => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'suggestion-chip' + (behaviourInput.value.trim() === reason ? ' selected' : '');
+                    chip.textContent = reason;
+                    if (onList.has(reason)) {
+                        chip.disabled = true;
+                        chip.title = 'Already on your list';
+                    } else {
+                        chip.addEventListener('click', () => {
+                            behaviourInput.value = reason;
+                            renderBehaviourSuggestions();
+                        });
+                    }
+                    list.appendChild(chip);
+                });
+                behaviourSuggestions.appendChild(list);
+            });
+        }
+
+        function saveBehaviour() {
+            const reason = behaviourInput.value.trim();
+            if (!reason) {
+                behaviourInput.focus();
+                return;
+            }
+            ensureBehaviour(reason, behaviourModalType);
+            scheduleSave();
+            updateQuickNotes();
+            closeBehaviourModal();
+        }
+
+        behaviourTypeSmiley.addEventListener('click', () => setBehaviourModalType('smiley'));
+        behaviourTypeGrumpy.addEventListener('click', () => setBehaviourModalType('grumpy'));
+        behaviourInput.addEventListener('input', renderBehaviourSuggestions);
+        behaviourInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBehaviour(); });
+        document.getElementById('cancel-behaviour-btn').addEventListener('click', closeBehaviourModal);
+        document.getElementById('save-behaviour-btn').addEventListener('click', saveBehaviour);
+
         // Update quick notes
         function updateQuickNotes() {
             quickNotesList.innerHTML = '';
-
-            if (state.noteHistory.length === 0) {
-                return;
-            }
 
             state.noteHistory.forEach(note => {
                 const noteElement = document.createElement('button');
@@ -1944,6 +3098,17 @@
 
                 quickNotesList.appendChild(noteElement);
             });
+
+            // Add a behaviour to the list (from suggestions or typed) without
+            // having to log a Smiley or Grumpy first.
+            const addChip = document.createElement('button');
+            addChip.className = 'quick-note quick-note-add';
+            addChip.textContent = '+ Add';
+            addChip.title = 'Add a behaviour';
+            addChip.addEventListener('click', openBehaviourModal);
+            quickNotesList.appendChild(addChip);
+
+            keepAppOnScreen();
         }
 
         // Swap a behaviour chip for an inline text input so its label can be
@@ -1957,7 +3122,20 @@
             input.style.backgroundColor = state.noteColors[note.reason];
             input.style.color = getContrastColor(state.noteColors[note.reason]);
 
-            chip.replaceWith(input);
+            // Delete button beside the rename box. mousedown + preventDefault
+            // stops the input's blur (which would save a rename) firing first.
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'quick-note-delete';
+            del.textContent = '✕';
+            del.title = 'Remove this behaviour';
+            del.setAttribute('aria-label', 'Remove this behaviour');
+            const wrap = document.createElement('span');
+            wrap.className = 'quick-note-edit-wrap';
+            wrap.appendChild(input);
+            wrap.appendChild(del);
+
+            chip.replaceWith(wrap);
             input.focus();
             input.select();
 
@@ -1967,6 +3145,14 @@
                 committed = true;
                 renameBehaviour(note, input.value);
             };
+
+            const removeIt = (e) => {
+                e.preventDefault();
+                committed = true;
+                deleteBehaviour(note);
+            };
+            del.addEventListener('mousedown', removeIt);
+            del.addEventListener('touchstart', removeIt, { passive: false });
 
             input.addEventListener('blur', commit);
             input.addEventListener('keydown', (e) => {
@@ -2063,7 +3249,9 @@
             const content = document.getElementById('view-modal-content');
             const currentReason = resolveReason(event.type, event.reason);
 
-            title.textContent = `${event.type === 'smiley' ? '😊 Smiley' : '😠 Grumpy'} Details`;
+            title.textContent = `${event.type === 'smiley' ? '🙂 Smiley' : '☹️ Grumpy'} Details`;
+            viewingEvent = event;
+            document.getElementById('delete-event-btn').style.display = isChildView() ? 'none' : '';
 
             content.innerHTML = `
                 <p><strong>Reason:</strong> ${currentReason}</p>
@@ -2083,7 +3271,7 @@
         function initChart() {
             // Fixed vertical extent (-100..+100): the wrapper is set tall
             // enough to hold the whole range and the user scrolls to it.
-            chartWrapper.style.height = `${(Y_MAX - Y_MIN) * PIXELS_PER_UNIT}px`;
+            applyZoomGeometry();
 
             state.chart = new Chart(chartCanvas, {
                 type: 'line',
@@ -2107,6 +3295,9 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    // The canvas only draws gridlines over a very tall area;
+                    // 1:1 pixels keeps it within phone canvas-size limits.
+                    devicePixelRatio: 1,
                     layout: {
                         // Reserve space on the left equal to the sticky axis column,
                         // so the frozen numbering doesn't cover the plotted data.
@@ -2159,9 +3350,11 @@
                             // Panning stays handled by the existing scroll container -
                             // this just adds pinch/wheel zoom on top of it.
                             pan: { enabled: false },
+                            // Zooming is done by the app itself (see setGridZoom), so the
+                            // whole grid, emoji and labels scale together.
                             zoom: {
-                                wheel: { enabled: true, speed: 0.08 },
-                                pinch: { enabled: true },
+                                wheel: { enabled: false },
+                                pinch: { enabled: false },
                                 mode: 'xy',
                                 onZoomComplete: () => refreshOverlays()
                             },
@@ -2183,16 +3376,21 @@
         }
 
         // Update chart with current child's data
-        function updateChart() {
+        function updateChart(keepScroll) {
             const events = state.children[state.currentChild].events;
-            const spacing = COLUMN_WIDTH;
+            const spacing = cellSize();
             const pointCount = events.length + 1; // +1 for the starting zero point
 
             // Total categories is at least enough to fill the visible width
             // (so the grid/prize lines fill the frame from the start) and at
             // least enough to hold every point at a fixed, tight spacing -
             // points are never stretched to fill extra space.
-            const totalCategories = Math.max(pointCount, getFillCategoryCount(spacing));
+            // Plus half a screen of empty grid after the last point, so the
+            // view has room to scroll far enough to centre that last emoji.
+            const trailingPadding = events.length
+                ? Math.ceil((chartContainer.clientWidth || 400) / 2 / spacing)
+                : 0;
+            const totalCategories = Math.max(pointCount + trailingPadding, getFillCategoryCount(spacing));
             const requiredWidth = Math.max(chartContainer.clientWidth || 400, AXIS_WIDTH + totalCategories * spacing);
             chartWrapper.style.width = `${requiredWidth}px`;
 
@@ -2208,14 +3406,104 @@
 
             state.chart.data.labels = labels;
             state.chart.data.datasets[0].data = data;
-            state.chart.update();
+            // Sync the canvas to the wrapper's (possibly new) size now, rather
+            // than waiting for Chart.js's async resize, so the overlays below
+            // are placed with up-to-date scales.
+            state.chart.resize();
+            state.chart.update('none');
 
             refreshOverlays();
+            updateUndoButton();
 
-            // Always reset to the left edge so prize labels are visible from
-            // the start, and vertically anchor to the default framing below.
-            chartContainer.scrollLeft = 0;
-            applyDefaultVerticalPosition();
+            if (!keepScroll) centerOnLastPoint();
+        }
+
+        // Wrapper height and background grid for the current zoom level.
+        function applyZoomGeometry() {
+            const cell = cellSize();
+            chartWrapper.style.height = `${(Y_MAX - Y_MIN) * unitHeight()}px`;
+            chartWrapper.style.backgroundSize = `${cell}px ${unitHeight()}px, ${cell}px ${unitHeight()}px, 100% 100%`;
+            chartWrapper.style.backgroundPosition = `${AXIS_WIDTH % cell}px 0, 0 0, 0 0`;
+        }
+
+        // Zoom the grid, keeping the point under (anchorX, anchorY) - given in
+        // the chart window's own coordinates - in the same place on screen.
+        function setGridZoom(z, anchorX, anchorY) {
+            z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+            if (Math.abs(z - gridZoom) < 0.005 || !state.chart) return;
+            if (anchorX === undefined) anchorX = chartContainer.clientWidth / 2;
+            if (anchorY === undefined) anchorY = chartContainer.clientHeight / 2;
+            const ux = (chartContainer.scrollLeft + anchorX - AXIS_WIDTH) / cellSize();
+            const uy = (chartContainer.scrollTop + anchorY) / unitHeight();
+            gridZoom = z;
+            applyZoomGeometry();
+            updateChart(true);
+            chartContainer.scrollLeft = Math.max(0, AXIS_WIDTH + ux * cellSize() - anchorX);
+            chartContainer.scrollTop = Math.max(0, Math.min(uy * unitHeight() - anchorY, getMaxVerticalScroll()));
+        }
+
+        function saveGridZoom() {
+            try { localStorage.setItem(ZOOM_KEY, String(gridZoom)); } catch (err) {}
+        }
+
+        (function setupPinchZoom() {
+            let pinch = null;
+            let frame = null;
+            const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+            chartContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    pinch = { startDist: dist(e.touches), startZoom: gridZoom };
+                }
+            }, { passive: true });
+
+            chartContainer.addEventListener('touchmove', (e) => {
+                if (!pinch || e.touches.length !== 2) return;
+                e.preventDefault();
+                const rect = chartContainer.getBoundingClientRect();
+                const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                const my = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                const target = pinch.startZoom * dist(e.touches) / pinch.startDist;
+                if (frame) cancelAnimationFrame(frame);
+                frame = requestAnimationFrame(() => { frame = null; setGridZoom(target, mx, my); });
+            }, { passive: false });
+
+            const endPinch = (e) => {
+                if (pinch && e.touches.length < 2) { pinch = null; saveGridZoom(); }
+            };
+            chartContainer.addEventListener('touchend', endPinch);
+            chartContainer.addEventListener('touchcancel', endPinch);
+
+            // iOS Safari: stop the whole page zooming instead of the grid.
+            chartContainer.addEventListener('gesturestart', (e) => e.preventDefault());
+
+            // Trackpad pinch (and ctrl + mouse wheel) on computers.
+            let wheelSaveTimer = null;
+            chartContainer.addEventListener('wheel', (e) => {
+                if (!e.ctrlKey) return;
+                e.preventDefault();
+                const rect = chartContainer.getBoundingClientRect();
+                setGridZoom(gridZoom * Math.exp(-e.deltaY * 0.01), e.clientX - rect.left, e.clientY - rect.top);
+                clearTimeout(wheelSaveTimer);
+                wheelSaveTimer = setTimeout(saveGridZoom, 300);
+            }, { passive: false });
+        })();
+
+        // Puts the most recent emoji in the middle of the visible chart
+        // window (horizontally and vertically), so a parent reopening the
+        // app lands on where things currently stand. With no events yet it
+        // falls back to the default framing: left edge, 0 near the bottom.
+        function centerOnLastPoint() {
+            if (!lastPointCenter) {
+                chartContainer.scrollLeft = 0;
+                applyDefaultVerticalPosition();
+                return;
+            }
+            const maxLeft = Math.max(0, chartContainer.scrollWidth - chartContainer.clientWidth);
+            const targetLeft = lastPointCenter.x - chartContainer.clientWidth / 2;
+            const targetTop = lastPointCenter.y - chartContainer.clientHeight / 2;
+            chartContainer.scrollLeft = Math.max(0, Math.min(targetLeft, maxLeft));
+            chartContainer.scrollTop = Math.max(0, Math.min(targetTop, getMaxVerticalScroll()));
         }
 
         // Redraw the HTML overlays (emoji points, prize lines, zero line,
@@ -2283,6 +3571,7 @@
                 startY = e.clientY;
                 startHeight = chartContainer.getBoundingClientRect().height;
                 chartResizeHandle.classList.add('dragging');
+                chartResizedByUser = true;
                 chartResizeHandle.setPointerCapture(e.pointerId);
                 e.preventDefault();
             });
@@ -2308,6 +3597,7 @@
             const existingPoints = document.querySelectorAll('.chart-point');
             existingPoints.forEach(point => point.remove());
 
+            lastPointCenter = null;
             if (events.length === 0) {
                 updateConnectorLine([]);
                 return;
@@ -2340,11 +3630,11 @@
                 // score just before this event up to the score just after.
                 const direction = event.scoreChange >= 0 ? 1 : -1;
                 const magnitude = Math.max(1, Math.abs(event.scoreChange));
-                const x = Math.min(Math.max(xScale.getPixelForValue(idx + 1) + POINT_OFFSET_X, halfPoint), maxX);
+                const x = Math.min(Math.max(xScale.getPixelForValue(idx + 1) + POINT_OFFSET_X * gridZoom, halfPoint), maxX);
 
                 for (let step = 1; step <= magnitude; step++) {
                     const stepValue = prevScore + direction * step;
-                    let y = yScale.getPixelForValue(Math.max(Y_MIN, Math.min(Y_MAX, stepValue))) + POINT_OFFSET_Y;
+                    let y = yScale.getPixelForValue(Math.max(Y_MIN, Math.min(Y_MAX, stepValue))) + POINT_OFFSET_Y * gridZoom;
                     y = Math.min(Math.max(y, halfPoint), maxY);
 
                     centers.push({ x, y });
@@ -2354,7 +3644,8 @@
                     point.style.width = `${pointSize}px`;
                     point.style.height = `${pointSize}px`;
                     point.style.fontSize = `${Math.round(pointSize * 0.63)}px`;
-                    point.textContent = event.type === 'smiley' ? '😊' : '😠';
+                    point.style.borderWidth = `${gridZoom < 0.6 ? 1 : 2}px`;
+                    point.textContent = event.type === 'smiley' ? '🙂' : '☹️';
                     point.style.left = `${x}px`;
                     point.style.top = `${y}px`;
                     point.style.backgroundColor = state.noteColors[resolveReason(event.type, event.reason)] || '#cccccc';
@@ -2368,6 +3659,7 @@
             // (not the chart's raw un-offset values) so it visually touches
             // every emoji, including the fine-tune offset applied above.
             updateConnectorLine(centers);
+            lastPointCenter = centers[centers.length - 1] || null;
         }
 
         // Render a polyline through the given {x, y} pixel centers, linking
@@ -2446,7 +3738,10 @@
             const yScale = state.chart.scales.y;
             if (!yScale || !yScale.ticks) return;
 
+            // When zoomed out, label every 5th (or 10th) line so numbers don't collide.
+            const every = unitHeight() >= 18 ? 1 : unitHeight() >= 10 ? 5 : 10;
             yScale.ticks.forEach(tick => {
+                if (tick.value % every !== 0) return;
                 const y = yScale.getPixelForValue(tick.value);
                 const label = document.createElement('div');
                 label.className = 'y-axis-label' + (tick.value === 0 ? ' y-axis-label-zero' : '');
@@ -2491,6 +3786,8 @@
                 const prizeId = parseInt(nameEl.dataset.prizeId);
                 bindTapAndDoubleTap(nameEl, null, isChildView() ? null : () => openPrizeModal(prizeId));
             });
+
+            keepAppOnScreen();
         }
 
         // Update all display elements

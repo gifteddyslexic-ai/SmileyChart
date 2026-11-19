@@ -234,6 +234,156 @@
             padding: var(--space-4);
         }
 
+        /* Goodwill | Trust switch above the chart */
+        .mode-toggle {
+            display: flex;
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: var(--space-2);
+        }
+
+        .mode-btn {
+            flex: 1;
+            border: none;
+            background: white;
+            padding: 6px 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .mode-btn + .mode-btn { border-left: 1px solid var(--primary); }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .mode-btn.active.trust {
+            background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+        }
+
+        .mode-score {
+            display: inline-block;
+            min-width: 22px;
+            margin-left: 4px;
+            padding: 0 6px;
+            border-radius: 9px;
+            background: rgba(13, 43, 90, 0.08);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mode-btn.active .mode-score { background: rgba(255, 255, 255, 0.2); }
+
+        .chart-point.trust { border-color: #90CAF9; }
+
+        /* "Also counts for ..." in the note window */
+        .also-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+            padding: var(--space-2) 0 var(--space-3);
+            border-top: 1px solid var(--border);
+            margin-top: calc(-1 * var(--space-2));
+            margin-bottom: var(--space-3);
+            font-size: 14px;
+        }
+
+        .also-row label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            cursor: pointer;
+        }
+
+        .also-row input { width: 18px; height: 18px; }
+
+        .also-row.off .value-stepper { opacity: 0.35; pointer-events: none; }
+
+        .also-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+        }
+
+        /* Agreements (Trust mode) */
+        .agreements {
+            display: none;
+            margin-top: var(--space-3);
+        }
+
+        body.mode-trust .agreements { display: block; }
+
+        .agreement {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .agreement-text {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .agreement-stats {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .agreement-btn {
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .agreement-btn.kept { background: #e8f5e9; color: #2e7d32; }
+        .agreement-btn.broken { background: #fdecea; color: #c62828; }
+
+        .agreement-result {
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .agreement-result.kept { color: #2e7d32; }
+        .agreement-result.broken { color: #c62828; }
+
+        .agreement-add {
+            border: 2px dashed #1565C0;
+            background: white;
+            color: #1565C0;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .agreement-tip {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+        }
+
+        body.child-view-mode .agreement-btn,
+        body.child-view-mode .agreement-add { display: none; }
+
         .child-tabs-row {
             display: flex;
             align-items: stretch;
@@ -1511,6 +1661,10 @@
         </div>
 
         <div class="chart-section">
+            <div class="mode-toggle" id="mode-toggle" role="tablist" aria-label="Chart">
+                <button class="mode-btn goodwill" data-mode="goodwill" role="tab">🙂 Goodwill<span class="mode-score" id="mode-score-goodwill">0</span></button>
+                <button class="mode-btn trust" data-mode="trust" role="tab">🤝 Trust<span class="mode-score" id="mode-score-trust">0</span></button>
+            </div>
             <div class="child-tabs-row">
                 <div class="child-tabs" id="child-tabs">
                     <!-- Child tabs (plus the trailing "+" add-child tab) are rendered dynamically -->
@@ -1555,6 +1709,9 @@
                     <!-- Quick notes will be dynamically added here -->
                 </div>
             </div>
+
+            <!-- Trust mode: agreements the child has made -->
+            <div class="agreements" id="agreements"></div>
         </div>
 
         <div class="prizes-section" id="prizes-section">
@@ -1574,13 +1731,23 @@
             <input type="text" class="modal-input" id="note-input" placeholder="Enter reason for smiley/grumpy...">
 
             <div class="value-stepper-row">
-                <div class="value-stepper-label">Value</div>
+                <div class="value-stepper-label" id="value-label">Value</div>
                 <div class="value-stepper">
                     <button type="button" class="value-stepper-btn" id="value-minus-btn">−</button>
                     <div class="value-stepper-count" id="value-count">1</div>
                     <button type="button" class="value-stepper-btn" id="value-plus-btn">+</button>
                 </div>
             </div>
+
+            <div class="also-row off" id="also-row">
+                <label><input type="checkbox" id="also-check"> <span id="also-label">Also counts for trust</span></label>
+                <div class="value-stepper">
+                    <button type="button" class="value-stepper-btn" id="also-minus-btn">−</button>
+                    <div class="value-stepper-count" id="also-count">1</div>
+                    <button type="button" class="value-stepper-btn" id="also-plus-btn">+</button>
+                </div>
+            </div>
+            <div class="also-hint">Remembered for this behaviour next time.</div>
 
             <div class="quick-notes">
                 <div class="quick-notes-title">Frequently used notes</div>
@@ -1613,6 +1780,40 @@
         </div>
     </div>
 
+    <!-- Modal for making or editing an agreement (Trust mode) -->
+    <div class="modal" id="agreement-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="agreement-modal-title">Make an agreement</div>
+            <input type="text" class="modal-input" id="agreement-input" placeholder="Home by 6pm">
+            <div class="behaviour-type-toggle">
+                <button type="button" class="behaviour-type-btn smiley" id="agreement-once">Just once</button>
+                <button type="button" class="behaviour-type-btn smiley" id="agreement-daily">Every day</button>
+            </div>
+            <div class="value-stepper-row">
+                <div class="value-stepper-label">Trust if kept</div>
+                <div class="value-stepper">
+                    <button type="button" class="value-stepper-btn" id="agr-kept-minus">−</button>
+                    <div class="value-stepper-count" id="agr-kept-count">1</div>
+                    <button type="button" class="value-stepper-btn" id="agr-kept-plus">+</button>
+                </div>
+            </div>
+            <div class="value-stepper-row">
+                <div class="value-stepper-label">Trust lost if broken</div>
+                <div class="value-stepper">
+                    <button type="button" class="value-stepper-btn" id="agr-broken-minus">−</button>
+                    <div class="value-stepper-count" id="agr-broken-count">2</div>
+                    <button type="button" class="value-stepper-btn" id="agr-broken-plus">+</button>
+                </div>
+            </div>
+            <p class="modal-helper-text">Small agreements your child can easily keep build trust fastest.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-danger" id="delete-agreement-btn">Delete</button>
+                <button class="modal-btn modal-btn-cancel" id="cancel-agreement-btn">Cancel</button>
+                <button class="modal-btn modal-btn-save" id="save-agreement-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Small notice with an Undo / Redo action -->
     <div class="toast" id="toast" role="status" aria-live="polite">
         <span id="toast-text"></span>
@@ -1623,12 +1824,16 @@
     <div class="report-overlay" id="report-overlay">
         <div class="report-card">
             <div class="report-header">
-                <h2>📊 Goodwill Report</h2>
+                <h2 id="report-title">📊 Goodwill Report</h2>
                 <button class="toolbar-btn-inverse report-no-print" id="close-report-btn">Close</button>
             </div>
             <div class="report-body">
                 <div class="report-filters report-no-print">
                     <select class="report-select" id="report-child" aria-label="Child"></select>
+                    <div class="report-periods" id="report-modes">
+                        <button class="report-period report-mode" data-mode="goodwill">🙂 Goodwill</button>
+                        <button class="report-period report-mode" data-mode="trust">🤝 Trust</button>
+                    </div>
                     <div class="report-periods" id="report-periods">
                         <button class="report-period" data-days="7">7 days</button>
                         <button class="report-period" data-days="30">30 days</button>
@@ -1740,6 +1945,7 @@
             // Set once the starter behaviours have been offered, so renamed or
             // deleted defaults never come back (e.g. after an update).
             defaultsSeeded: false,
+            trustDefaultsSeeded: false,
             // Smileys progress through a warm yellow -> green gradient, with each
             // step chosen for clear visual separation from its neighbours
             smileyColors: [
@@ -1870,18 +2076,83 @@
               lose: ['Slammed doors or stormed off', "Wasn't honest about where they were", 'Was disrespectful', 'Broke a screen or curfew agreement', 'Refused to help'] }
         ];
 
+        // Trust suggestions: being reliable and honest, keeping agreements.
+        const TRUST_SUGGESTIONS = [
+            { age: 'Ages 3–6',
+              build: ['Told the truth', 'Did what I said I would', 'Stayed where I could be seen', 'Gave back what I borrowed', 'Owned up to a mistake'],
+              lose: ['Told a fib', 'Took something without asking', 'Wandered off', 'Hid something'] },
+            { age: 'Ages 7–11',
+              build: ['Did what I said I would', 'Kept a promise', 'Came home on time', 'Did homework without being checked', 'Looked after something lent to me'],
+              lose: ['Broke a promise', 'Went somewhere without asking', 'Said homework was done when it wasn’t', 'Took something without asking'] },
+            { age: 'Ages 12+',
+              build: ['Was honest about where they were', 'Kept a screen or curfew agreement', 'Did what they said they’d do', 'Handled money responsibly', 'Kept a confidence'],
+              lose: ['Wasn’t honest about where they were', 'Broke a curfew agreement', 'Hid something from us', 'Used a device after the agreed time'] }
+        ];
+        function suggestionsFor(mode) { return mode === 'trust' ? TRUST_SUGGESTIONS : BEHAVIOUR_SUGGESTIONS; }
+
+        // First visit to Trust mode: a small starter set (3 builders, 2 losers).
+        function seedTrustDefaults() {
+            if (state.trustDefaultsSeeded) return;
+            state.trustDefaultsSeeded = true;
+            if (state.noteHistory.some(n => evMode(n) === 'trust')) return;
+            const middle = TRUST_SUGGESTIONS[1];
+            middle.build.slice(0, 3).forEach(r => ensureBehaviour(r, 'smiley', 'trust'));
+            middle.lose.slice(0, 2).forEach(r => ensureBehaviour(r, 'grumpy', 'trust'));
+        }
+
         // Starter set for a brand-new family: the first 4 builders and the
         // first 3 losers from the middle (7–11) age group.
         function seedDefaultBehaviours() {
             if (state.defaultsSeeded) return;
             state.defaultsSeeded = true;
             // A family that already has behaviours of its own keeps just those.
-            if (state.noteHistory.length) return;
+            if (state.noteHistory.some(n => evMode(n) === 'goodwill')) return;
             const middle = BEHAVIOUR_SUGGESTIONS[1];
-            middle.build.slice(0, 4).forEach(r => ensureBehaviour(r, 'smiley'));
-            middle.lose.slice(0, 3).forEach(r => ensureBehaviour(r, 'grumpy'));
+            middle.build.slice(0, 4).forEach(r => ensureBehaviour(r, 'smiley', 'goodwill'));
+            middle.lose.slice(0, 3).forEach(r => ensureBehaviour(r, 'grumpy', 'goodwill'));
             // No save here: the defaults are written with the family's first
             // real change, so simply opening the app never overwrites anything.
+        }
+
+        // --- Goodwill | Trust ------------------------------------------------
+        // Every entry, behaviour and prize belongs to one of the two modes.
+        // Anything saved before Trust existed has no mode and counts as goodwill.
+        const MODE_KEY = 'smileychart-mode';
+        let chartMode = 'goodwill';
+        try { if (localStorage.getItem(MODE_KEY) === 'trust') chartMode = 'trust'; } catch (err) {}
+        function evMode(x) { return (x && x.mode) || 'goodwill'; }
+        function otherMode(mode) { return mode === 'trust' ? 'goodwill' : 'trust'; }
+        function modeWord(mode) { return mode === 'trust' ? 'trust' : 'goodwill'; }
+        function modeWordCap(mode) { return mode === 'trust' ? 'Trust' : 'Goodwill'; }
+        function modeScore(child, mode) {
+            return child.events.reduce((sum, ev) => sum + (evMode(ev) === mode ? ev.scoreChange : 0), 0);
+        }
+        // Keep the legacy goodwill total in step with the entries.
+        function syncScores(child) { child.score = modeScore(child, 'goodwill'); }
+
+        // Chart columns: one per moment. A behaviour that counts for both
+        // goodwill and trust is saved as two linked entries sharing a column,
+        // so both lines stay lined up in time on the same grid.
+        function eventColumns(events) {
+            const cols = [];
+            let col = 0;
+            events.forEach((ev, i) => {
+                const prev = events[i - 1];
+                if (!(ev.link && prev && prev.link === ev.link)) col++;
+                cols.push(col);
+            });
+            return { cols, count: col };
+        }
+
+        function setChartMode(mode) {
+            chartMode = mode;
+            try { localStorage.setItem(MODE_KEY, mode); } catch (err) {}
+            document.body.classList.toggle('mode-trust', mode === 'trust');
+            if (mode === 'trust') seedTrustDefaults();
+            updateChart();
+            updatePrizesDisplay();
+            updateQuickNotes();
+            renderAgreements();
         }
 
         function behaviourEmoji(type) {
@@ -1918,6 +2189,7 @@
                 noteColors: state.noteColors,
                 reasonAliases: state.reasonAliases,
                 defaultsSeeded: state.defaultsSeeded,
+                trustDefaultsSeeded: state.trustDefaultsSeeded,
                 nextChildId: state.nextChildId
             });
         }
@@ -2018,6 +2290,7 @@
                 if (data.noteColors) state.noteColors = data.noteColors;
                 if (data.reasonAliases) state.reasonAliases = data.reasonAliases;
                 if (data.defaultsSeeded) state.defaultsSeeded = true;
+                if (data.trustDefaultsSeeded) state.trustDefaultsSeeded = true;
                 if (data.nextChildId) state.nextChildId = data.nextChildId;
 
                 const ids = Object.keys(state.children).map(Number);
@@ -2147,6 +2420,13 @@
             // Child tabs (including the trailing "+" add-child tab) are
             // built dynamically since the number of children can grow.
             renderChildTabs();
+
+            document.querySelectorAll('#mode-toggle .mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => setChartMode(btn.dataset.mode));
+            });
+            document.body.classList.toggle('mode-trust', chartMode === 'trust');
+            if (chartMode === 'trust') seedTrustDefaults();
+            renderAgreements();
 
             smileyBtn.addEventListener('click', () => openNoteModal('smiley'));
             grumpyBtn.addEventListener('click', () => openNoteModal('grumpy'));
@@ -2546,21 +2826,49 @@
             updateChart();
             updatePrizesDisplay();
             updateQuickNotes();
+            renderAgreements();
         }
 
         // Open note modal
         function openNoteModal(type, presetNote = '') {
             state.currentType = type;
             const title = document.getElementById('modal-title');
-            title.textContent = `Add Note for ${type === 'smiley' ? '🙂 Smiley' : '☹️ Grumpy'}`;
+            title.textContent = `Add ${modeWord(chartMode)} note for ${type === 'smiley' ? '🙂 Smiley' : '☹️ Grumpy'}`;
             noteInput.value = presetNote;
             setCurrentValue(1);
+            document.getElementById('value-label').textContent = `${modeWordCap(chartMode)} value`;
+            document.getElementById('also-label').textContent = `Also counts for ${modeWord(otherMode(chartMode))}`;
+            applyAlsoFromBehaviour();
             noteModal.style.display = 'flex';
             noteInput.focus();
 
             // Update quick notes in modal
             updateModalQuickNotes();
         }
+
+        // "Also counts for the other mode": remembered per behaviour.
+        const alsoRow = document.getElementById('also-row');
+        const alsoCheck = document.getElementById('also-check');
+        const alsoCountEl = document.getElementById('also-count');
+        let alsoValue = 1;
+        function setAlsoValue(v) {
+            alsoValue = Math.max(1, Math.min(MAX_EVENT_VALUE, v));
+            alsoCountEl.textContent = alsoValue;
+        }
+        function setAlsoChecked(on) {
+            alsoCheck.checked = on;
+            alsoRow.classList.toggle('off', !on);
+        }
+        function applyAlsoFromBehaviour() {
+            const reason = noteInput.value.trim();
+            const note = state.noteHistory.find(n => n.reason === reason && n.type === state.currentType && evMode(n) === chartMode);
+            setAlsoChecked(!!(note && note.both));
+            setAlsoValue(note && note.otherValue ? note.otherValue : (state.currentValue || 1));
+        }
+        alsoCheck.addEventListener('change', () => setAlsoChecked(alsoCheck.checked));
+        document.getElementById('also-minus-btn').addEventListener('click', () => setAlsoValue(alsoValue - 1));
+        document.getElementById('also-plus-btn').addEventListener('click', () => setAlsoValue(alsoValue + 1));
+        noteInput.addEventListener('change', applyAlsoFromBehaviour);
 
         // Close note modal
         function closeNoteModal() {
@@ -2580,14 +2888,16 @@
             if (prizeId && !isNew) {
                 // Editing existing prize
                 const prize = state.prizes.find(p => p.id === prizeId);
-                title.textContent = 'Edit Prize';
+                title.textContent = evMode(prize) === 'trust' ? 'Edit freedom' : 'Edit Prize';
                 prizeNameInput.value = prize.name;
                 prizeRequirementInput.value = prize.requirement;
             } else {
                 // Adding new prize
-                title.textContent = 'Add New Prize';
+                title.textContent = chartMode === 'trust' ? 'Add a freedom to earn' : 'Add New Prize';
                 prizeNameInput.value = '';
                 prizeRequirementInput.value = '';
+                prizeNameInput.placeholder = chartMode === 'trust' ? 'Walk to school alone' : 'Prize name';
+                prizeRequirementInput.placeholder = chartMode === 'trust' ? 'Trust level required' : 'Goodwill level required';
             }
 
             prizeModal.style.display = 'flex';
@@ -2605,21 +2915,39 @@
             const reason = noteInput.value.trim();
             if (reason) {
                 const value = state.currentValue || 1;
+                const sign = state.currentType === 'smiley' ? 1 : -1;
                 const event = {
                     type: state.currentType,
                     reason: reason,
                     date: new Date(),
-                    scoreChange: state.currentType === 'smiley' ? value : -value
+                    scoreChange: sign * value,
+                    mode: chartMode
                 };
+                const child = state.children[state.currentChild];
 
                 // Add event to current child
-                state.children[state.currentChild].events.push(event);
+                child.events.push(event);
 
-                // Update score
-                state.children[state.currentChild].score += event.scoreChange;
+                // Counts for the other mode too: a linked twin entry.
+                const both = alsoCheck.checked;
+                if (both) {
+                    event.link = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+                    child.events.push({
+                        type: state.currentType,
+                        reason: reason,
+                        date: event.date,
+                        scoreChange: sign * alsoValue,
+                        mode: otherMode(chartMode),
+                        link: event.link,
+                        twin: true
+                    });
+                }
+                syncScores(child);
 
-                // Add to note history
-                addToNoteHistory(reason, state.currentType);
+                // Add to note history, remembering "counts for both"
+                const note = addToNoteHistory(reason, state.currentType, chartMode);
+                note.both = both;
+                if (both) note.otherValue = alsoValue; else delete note.otherValue;
                 redoStack = [];
                 updateUndoButton();
 
@@ -2637,6 +2965,165 @@
                 noteInput.focus();
             }
         }
+
+        // --- Agreements (trust mode) ----------------------------------------
+        // The surest way to build trust: make lots of small agreements and
+        // keep them. Each one is logged as kept (trust up) or broken (down).
+        const agreementsBox = document.getElementById('agreements');
+        const agreementModal = document.getElementById('agreement-modal');
+        const agreementInput = document.getElementById('agreement-input');
+        let editingAgreementId = null;
+        let agreementRepeat = 'once';
+        let agreementKept = 1, agreementBroken = 2;
+
+        function agreementEvents(child, id) {
+            return child.events.filter(e => e.agreementId === id);
+        }
+
+        function loggedToday(events) {
+            const k = dayKey(new Date());
+            return events.find(e => dayKey(e.date) === k);
+        }
+
+        function renderAgreements() {
+            if (!agreementsBox) return;
+            const child = state.children[state.currentChild];
+            if (!child) { agreementsBox.innerHTML = ''; return; }
+            child.agreements = child.agreements || [];
+            const childView = isChildView();
+            let html = `<div class="quick-notes-title">🤝 Agreements</div>`;
+            if (!child.agreements.length) {
+                html += `<div class="agreement-tip">${childView
+                    ? 'No agreements yet.'
+                    : 'Make small agreements together and log whether they were kept. Keeping lots of agreements is the surest way to build trust.'}</div>`;
+            }
+            child.agreements.forEach(a => {
+                const evs = agreementEvents(child, a.id);
+                const kept = evs.filter(e => e.scoreChange > 0).length;
+                const stats = evs.length ? `kept ${kept} of ${evs.length}` : 'not logged yet';
+                let right = '';
+                const last = a.repeat === 'daily' ? loggedToday(evs) : evs[evs.length - 1];
+                if (last) {
+                    const ok = last.scoreChange > 0;
+                    right = `<span class="agreement-result ${ok ? 'kept' : 'broken'}">${ok ? '✓ Kept' : '✗ Broken'}${a.repeat === 'daily' ? ' today' : ''}</span>`;
+                } else {
+                    right = `<button class="agreement-btn kept" data-act="kept" title="Kept: +${a.kept} trust">✓ Kept</button>
+                             <button class="agreement-btn broken" data-act="broken" title="Broken: −${a.broken} trust">✗ Broken</button>`;
+                }
+                html += `<div class="agreement" data-id="${a.id}">
+                    <div class="agreement-text">${escapeHtml(a.text)}<div class="agreement-stats">${a.repeat === 'daily' ? 'Every day · ' : ''}${stats}</div></div>
+                    ${right}
+                </div>`;
+            });
+            if (!childView) html += `<button class="agreement-add" id="agreement-add-btn">+ Make a new agreement</button>`;
+            agreementsBox.innerHTML = html;
+
+            agreementsBox.querySelectorAll('.agreement').forEach(row => {
+                const id = row.dataset.id;
+                row.querySelectorAll('.agreement-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); logAgreement(id, btn.dataset.act === 'kept'); });
+                });
+                if (!childView) bindTapAndDoubleTap(row.querySelector('.agreement-text'), () => {}, () => openAgreementModal(id));
+            });
+            const add = document.getElementById('agreement-add-btn');
+            if (add) add.addEventListener('click', () => openAgreementModal(null));
+        }
+
+        function logAgreement(id, kept) {
+            if (isChildView()) return;
+            const child = state.children[state.currentChild];
+            const a = (child.agreements || []).find(x => x.id === id);
+            if (!a) return;
+            const event = {
+                type: kept ? 'smiley' : 'grumpy',
+                reason: a.text,
+                date: new Date(),
+                scoreChange: kept ? a.kept : -a.broken,
+                mode: 'trust',
+                agreementId: a.id
+            };
+            child.events.push(event);
+            syncScores(child);
+            redoStack = [];
+            updateChart();
+            updatePrizesDisplay();
+            renderAgreements();
+            scheduleSave();
+            showToast(describeEvent(event), 'Undo', () => {
+                const record = removeEvent(state.currentChild, event);
+                if (!record) return;
+                redoStack.push(record);
+                refreshAfterEdit();
+            });
+        }
+
+        function setAgreementRepeat(r) {
+            agreementRepeat = r;
+            document.getElementById('agreement-once').classList.toggle('active', r === 'once');
+            document.getElementById('agreement-daily').classList.toggle('active', r === 'daily');
+        }
+        function setAgreementValues(k, b) {
+            agreementKept = Math.max(1, Math.min(MAX_EVENT_VALUE, k));
+            agreementBroken = Math.max(1, Math.min(MAX_EVENT_VALUE, b));
+            document.getElementById('agr-kept-count').textContent = agreementKept;
+            document.getElementById('agr-broken-count').textContent = agreementBroken;
+        }
+
+        function openAgreementModal(id) {
+            const child = state.children[state.currentChild];
+            const a = id ? (child.agreements || []).find(x => x.id === id) : null;
+            editingAgreementId = a ? a.id : null;
+            document.getElementById('agreement-modal-title').textContent = a ? 'Edit agreement' : 'Make an agreement';
+            agreementInput.value = a ? a.text : '';
+            setAgreementRepeat(a ? a.repeat : 'once');
+            setAgreementValues(a ? a.kept : 1, a ? a.broken : 2);
+            document.getElementById('delete-agreement-btn').style.display = a ? '' : 'none';
+            agreementModal.style.display = 'flex';
+            agreementInput.focus();
+        }
+        function closeAgreementModal() { agreementModal.style.display = 'none'; }
+
+        function saveAgreement() {
+            const text = agreementInput.value.trim();
+            if (!text) { agreementInput.focus(); return; }
+            const child = state.children[state.currentChild];
+            child.agreements = child.agreements || [];
+            const existing = child.agreements.find(x => x.id === editingAgreementId);
+            if (existing) {
+                // Values apply from now on; past entries keep what they earned.
+                Object.assign(existing, { text, repeat: agreementRepeat, kept: agreementKept, broken: agreementBroken });
+            } else {
+                child.agreements.push({
+                    id: `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+                    text, repeat: agreementRepeat, kept: agreementKept, broken: agreementBroken
+                });
+            }
+            scheduleSave();
+            closeAgreementModal();
+            renderAgreements();
+        }
+
+        function deleteAgreement() {
+            const child = state.children[state.currentChild];
+            const a = (child.agreements || []).find(x => x.id === editingAgreementId);
+            if (!a) return;
+            if (!confirm(`Remove the agreement "${a.text}"? Trust already earned or lost stays on the chart.`)) return;
+            child.agreements = child.agreements.filter(x => x !== a);
+            scheduleSave();
+            closeAgreementModal();
+            renderAgreements();
+        }
+
+        document.getElementById('agreement-once').addEventListener('click', () => setAgreementRepeat('once'));
+        document.getElementById('agreement-daily').addEventListener('click', () => setAgreementRepeat('daily'));
+        document.getElementById('agr-kept-minus').addEventListener('click', () => setAgreementValues(agreementKept - 1, agreementBroken));
+        document.getElementById('agr-kept-plus').addEventListener('click', () => setAgreementValues(agreementKept + 1, agreementBroken));
+        document.getElementById('agr-broken-minus').addEventListener('click', () => setAgreementValues(agreementKept, agreementBroken - 1));
+        document.getElementById('agr-broken-plus').addEventListener('click', () => setAgreementValues(agreementKept, agreementBroken + 1));
+        document.getElementById('save-agreement-btn').addEventListener('click', saveAgreement);
+        document.getElementById('cancel-agreement-btn').addEventListener('click', closeAgreementModal);
+        document.getElementById('delete-agreement-btn').addEventListener('click', deleteAgreement);
+        agreementInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveAgreement(); });
 
         // --- Undo / redo / delete -------------------------------------------
         const undoBtn = document.getElementById('undo-btn');
@@ -2668,15 +3155,21 @@
 
         function describeEvent(event) {
             const n = Math.abs(event.scoreChange);
-            return `${behaviourEmoji(event.type)} ${resolveReason(event.type, event.reason)} (${event.scoreChange > 0 ? '+' : '−'}${n})`;
+            const label = event.agreementId
+                ? `${event.scoreChange > 0 ? 'Kept' : 'Broke'}: ${event.reason}`
+                : `${behaviourEmoji(event.type)} ${resolveReason(event.type, event.reason)}`;
+            return `${label} (${event.scoreChange > 0 ? '+' : '−'}${n}${evMode(event) === 'trust' ? ' trust' : ''})`;
         }
 
         // Keep the behaviour's usage count in step when an entry is removed or restored.
         function bumpBehaviourCount(event, delta) {
+            // Agreement entries and the linked twin of a "counts for both"
+            // entry aren't behaviours of their own.
+            if (event.agreementId || event.twin) return;
             const reason = resolveReason(event.type, event.reason);
-            const note = state.noteHistory.find(n => n.reason === reason && n.type === event.type);
+            const note = state.noteHistory.find(n => n.reason === reason && n.type === event.type && evMode(n) === evMode(event));
             if (note) note.count = Math.max(0, note.count + delta);
-            else if (delta > 0) ensureBehaviour(reason, event.type).count = delta;
+            else if (delta > 0) ensureBehaviour(reason, event.type, evMode(event)).count = delta;
             state.noteHistory.sort((a, b) => b.count - a.count);
         }
 
@@ -2687,28 +3180,36 @@
             scheduleSave();
         }
 
+        // Removes an entry together with its linked "counts for both" twin.
         function removeEvent(childId, event) {
             const child = state.children[childId];
-            const index = child.events.indexOf(event);
-            if (index < 0) return null;
-            child.events.splice(index, 1);
-            child.score -= event.scoreChange;
-            bumpBehaviourCount(event, -1);
-            return { childId, event, index };
+            if (child.events.indexOf(event) < 0) return null;
+            const group = event.link ? child.events.filter(e => e.link === event.link) : [event];
+            const items = group.map(e => ({ event: e, index: child.events.indexOf(e) })).sort((a, b) => a.index - b.index);
+            items.slice().reverse().forEach(it => child.events.splice(it.index, 1));
+            items.forEach(it => bumpBehaviourCount(it.event, -1));
+            syncScores(child);
+            return { childId, event, items };
         }
 
         function restoreEvent(record) {
             const child = state.children[record.childId];
             if (!child) return;
-            child.events.splice(Math.min(record.index, child.events.length), 0, record.event);
-            child.score += record.event.scoreChange;
-            bumpBehaviourCount(record.event, 1);
+            record.items.forEach(it => child.events.splice(Math.min(it.index, child.events.length), 0, it.event));
+            record.items.forEach(it => bumpBehaviourCount(it.event, 1));
+            syncScores(child);
+        }
+
+        function lastEventInMode() {
+            const events = state.children[state.currentChild].events;
+            for (let i = events.length - 1; i >= 0; i--) if (evMode(events[i]) === chartMode) return events[i];
+            return null;
         }
 
         function undoLast() {
-            const events = state.children[state.currentChild].events;
-            if (!events.length) return;
-            const record = removeEvent(state.currentChild, events[events.length - 1]);
+            const last = lastEventInMode();
+            if (!last) return;
+            const record = removeEvent(state.currentChild, last);
             redoStack.push(record);
             refreshAfterEdit();
             showToast(`Undone: ${describeEvent(record.event)}`, 'Redo', redoLast);
@@ -2736,7 +3237,7 @@
 
         function updateUndoButton() {
             const child = state.children[state.currentChild];
-            undoBtn.disabled = !child || child.events.length === 0;
+            undoBtn.disabled = !child || !lastEventInMode();
             redoBtn.disabled = redoStack.length === 0;
         }
 
@@ -2750,6 +3251,7 @@
         const reportContent = document.getElementById('report-content');
         let reportChildId = null;
         let reportDays = 30;
+        let reportMode = 'goodwill';
 
         // Diverging scale for a day's net goodwill: pink (lost) - grey (even) - green (gained).
         const HEAT_COLORS = { '-3': '#c51b7d', '-2': '#de77ae', '-1': '#f1b6da', '0': '#e3e1dc', '1': '#b8e186', '2': '#7fbc41', '3': '#4d9221' };
@@ -2772,6 +3274,7 @@
         }
 
         function openReport(childId) {
+            reportMode = chartMode;
             reportChildId = childId || state.currentChild;
             reportChildSelect.innerHTML = '';
             Object.keys(state.children).map(Number).sort((a, b) => a - b).forEach(id => {
@@ -2797,6 +3300,7 @@
             let running = 0;
             const rows = [];
             state.children[childId].events.forEach(ev => {
+                if (evMode(ev) !== reportMode) return;
                 running += ev.scoreChange;
                 if (!since || ev.date >= since) rows.push({ ev, after: running });
             });
@@ -2806,7 +3310,11 @@
         function renderReport() {
             const child = state.children[reportChildId];
             const { rows, since } = reportEntries(reportChildId, reportDays);
-            document.querySelectorAll('.report-period').forEach(b => b.classList.toggle('active', Number(b.dataset.days) === reportDays));
+            document.querySelectorAll('#report-periods .report-period').forEach(b => b.classList.toggle('active', Number(b.dataset.days) === reportDays));
+            document.querySelectorAll('.report-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === reportMode));
+            const W = modeWord(reportMode), Wc = modeWordCap(reportMode);
+            document.getElementById('report-title').textContent = `📊 ${Wc} Report`;
+            const modeEvents = child.events.filter(ev => evMode(ev) === reportMode);
 
             const today = startOfDay(new Date());
             const firstDate = rows.length ? startOfDay(rows[0].ev.date) : today;
@@ -2840,7 +3348,7 @@
 
             // Headline numbers
             html += `<div class="report-section"><div class="report-tiles">
-                <div class="report-tile"><div class="report-tile-value">${child.score}</div><div class="report-tile-label">Goodwill now</div></div>
+                <div class="report-tile"><div class="report-tile-value">${modeScore(child, reportMode)}</div><div class="report-tile-label">${Wc} now</div></div>
                 <div class="report-tile"><div class="report-tile-value">${net > 0 ? '+' : ''}${net}</div><div class="report-tile-label">Change</div></div>
                 <div class="report-tile"><div class="report-tile-value">${smileys}</div><div class="report-tile-label">🙂 Smileys</div></div>
                 <div class="report-tile"><div class="report-tile-value">${grumpys}</div><div class="report-tile-label">☹️ Grumpys</div></div>
@@ -2853,8 +3361,15 @@
 
             // Day / week / month sliders: where the balance of goodwill gained
             // vs lost sits right now, from all red (only lost) to all green.
-            html += `<div class="report-section"><div class="report-section-title">Goodwill by day, week and month</div>`;
-            html += renderGoodwillSliders(reportChildId);
+            if (reportMode === 'trust') {
+                const agr = rows.filter(({ ev }) => ev.agreementId);
+                const kept = agr.filter(({ ev }) => ev.scoreChange > 0).length;
+                html += `<div class="report-section"><div class="report-section-title">Agreements</div><div class="report-note">${agr.length
+                    ? `Kept <strong>${kept} of ${agr.length}</strong> agreements in this period (${Math.round(kept / agr.length * 100)}%).`
+                    : 'No agreements logged in this period yet. The best way to build trust is to make lots of small agreements and keep them.'}</div></div>`;
+            }
+            html += `<div class="report-section"><div class="report-section-title">${Wc} by day, week and month</div>`;
+            html += renderGoodwillSliders(reportChildId, null, reportMode);
 
             // Month-by-month calendars: Mon-Sun across, one row per week. Each day
             // is coloured by its net goodwill, each week row ends with that week's
@@ -2865,13 +3380,13 @@
             const yearMode = reportDays === 0 || reportDays >= 90;
             const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
             const allDays = {};
-            child.events.forEach(ev => {
+            modeEvents.forEach(ev => {
                 const k = dayKey(ev.date);
                 allDays[k] = allDays[k] || { s: 0, g: 0, net: 0 };
                 if (ev.scoreChange > 0) allDays[k].s++; else allDays[k].g++;
                 allDays[k].net += ev.scoreChange;
             });
-            const firstEver = child.events.length ? startOfDay(child.events[0].date) : today;
+            const firstEver = modeEvents.length ? startOfDay(modeEvents[0].date) : today;
             const calStart = yearMode ? heatStart : (firstEver < yearAgo ? yearAgo : firstEver);
             const shownFrom = yearMode ? heatStart : new Date(calStart.getFullYear(), calStart.getMonth(), 1);
             const inRange = (d) => d >= shownFrom && d <= today;
@@ -2915,9 +3430,9 @@
                 html += `<div class="hm-nav report-no-print"><button class="hm-nav-btn" id="hm-prev">‹ Earlier</button><span class="hm-nav-hint">Swipe for earlier months</span><button class="hm-nav-btn" id="hm-next">Later ›</button></div>`;
             }
             html += `<div class="heatmap-wrap ${yearMode ? 'year-mode' : 'month-mode'}" id="heatmap-wrap">${months}</div>`;
-            html += `<div class="heatmap-legend"><span>Lost goodwill</span>`;
+            html += `<div class="heatmap-legend"><span>Lost ${W}</span>`;
             [-3, -2, -1, 0, 1, 2, 3].forEach(v => { html += `<span class="hm-cell" style="background:${heatColor(v)}"></span>`; });
-            html += `<span>Gained goodwill</span><span style="margin-left:8px" class="hm-cell empty"></span><span>Nothing logged</span></div>`;
+            html += `<span>Gained ${W}</span><span style="margin-left:8px" class="hm-cell empty"></span><span>Nothing logged</span></div>`;
             if (yearMode && heatStart > rangeStart) html += `<div class="report-empty">Showing the last 12 months.</div>`;
             html += `<div class="heatmap-info report-no-print" id="heatmap-info">Tap a day to see its details.</div></div>`;
 
@@ -2948,15 +3463,15 @@
                 });
                 return out + `</div>`;
             };
-            html += section('smiley', 'Behaviours that built goodwill');
-            html += section('grumpy', 'Behaviours that lost goodwill');
+            html += section('smiley', `Behaviours that built ${W}`);
+            html += section('grumpy', `Behaviours that lost ${W}`);
 
             // Every entry, as a table (also what the printout lists)
             html += `<div class="report-section"><div class="report-section-title">All entries</div>`;
             if (!rows.length) {
                 html += `<div class="report-empty">No entries in this period.</div>`;
             } else {
-                html += `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Date</th><th>Behaviour</th><th class="num">Points</th><th class="num">Goodwill</th></tr></thead><tbody>`;
+                html += `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Date</th><th>Behaviour</th><th class="num">Points</th><th class="num">${Wc}</th></tr></thead><tbody>`;
                 rows.slice().reverse().forEach(({ ev, after }) => {
                     html += `<tr><td>${escapeHtml(formatDate(ev.date))}</td><td>${behaviourEmoji(ev.type)} ${escapeHtml(resolveReason(ev.type, ev.reason))}</td>
                         <td class="num">${ev.scoreChange > 0 ? '+' : ''}${ev.scoreChange}</td><td class="num">${after}</td></tr>`;
@@ -2994,17 +3509,18 @@
         }
 
         // Totals for a child's entries on or after `from`.
-        function goodwillSince(childId, from) {
+        function goodwillSince(childId, from, mode = 'goodwill') {
             let gained = 0, lost = 0, smileys = 0, grumpys = 0;
             state.children[childId].events.forEach(ev => {
-                if (ev.date < from) return;
+                if (ev.date < from || evMode(ev) !== mode) return;
                 if (ev.scoreChange > 0) { gained += ev.scoreChange; smileys++; }
                 else { lost += -ev.scoreChange; grumpys++; }
             });
             return { gained, lost, smileys, grumpys };
         }
 
-        function renderGoodwillSliders(childId, only) {
+        function renderGoodwillSliders(childId, only, mode = 'goodwill') {
+            const W = modeWord(mode);
             const today = startOfDay(new Date());
             const weekStart = new Date(today);
             weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
@@ -3017,7 +3533,7 @@
             if (only) rows = rows.filter(r => only.includes(r[0]));
             let out = '<div class="gw-sliders">';
             rows.forEach(([label, from]) => {
-                const t = goodwillSince(childId, from);
+                const t = goodwillSince(childId, from, mode);
                 const total = t.gained + t.lost;
                 const net = t.gained - t.lost;
                 // Position = share of goodwill points that were gained (0% all lost, 100% all gained).
@@ -3030,15 +3546,15 @@
                     <div class="gw-track${total ? '' : ' none'}"><span class="gw-marker" style="left:${pos}%">${total ? (pos >= 50 ? '🙂' : '☹️') : ''}</span></div>
                 </div>`;
             });
-            out += '<div class="gw-scale"><span>☹️ All goodwill lost</span><span>Even</span><span>All goodwill gained 🙂</span></div></div>';
+            out += `<div class="gw-scale"><span>☹️ All ${W} lost</span><span>Even</span><span>All ${W} gained 🙂</span></div></div>`;
             return out;
         }
 
         // Bars of how often each behaviour was given, for entries on or after `from`.
-        function behaviourBarsHtml(childId, from, titles) {
+        function behaviourBarsHtml(childId, from, titles, mode = 'goodwill') {
             const byBehaviour = {};
             state.children[childId].events.forEach(ev => {
-                if (ev.date < from) return;
+                if (ev.date < from || evMode(ev) !== mode) return;
                 const reason = resolveReason(ev.type, ev.reason);
                 const key = `${ev.type}::${reason}`;
                 byBehaviour[key] = byBehaviour[key] || { type: ev.type, reason, times: 0 };
@@ -3070,10 +3586,13 @@
             const today = startOfDay(new Date());
             const weekStart = new Date(today);
             weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+            const W = modeWord(chartMode);
             box.innerHTML =
                 `<div class="report-section-title">Your goodwill this week</div>` +
-                renderGoodwillSliders(state.currentChild, ['This week']) +
-                behaviourBarsHtml(state.currentChild, weekStart, ['What built goodwill this week', 'What lost goodwill this week']);
+                renderGoodwillSliders(state.currentChild, ['This week'], 'goodwill') +
+                `<div class="report-section-title">Your trust this week</div>` +
+                renderGoodwillSliders(state.currentChild, ['This week'], 'trust') +
+                behaviourBarsHtml(state.currentChild, weekStart, [`What built ${W} this week`, `What lost ${W} this week`], chartMode);
         }
 
         function csvCell(value) {
@@ -3082,20 +3601,22 @@
         }
 
         function buildCsv(childIds) {
-            const lines = [['Child', 'Date', 'Time', 'Type', 'Behaviour', 'Points', 'Goodwill after'].join(',')];
+            const lines = [['Child', 'Date', 'Time', 'Mode', 'Type', 'Behaviour', 'Points', 'Goodwill after', 'Trust after'].join(',')];
             childIds.forEach(id => {
                 const child = state.children[id];
-                let running = 0;
+                const run = { goodwill: 0, trust: 0 };
                 child.events.forEach(ev => {
-                    running += ev.scoreChange;
+                    run[evMode(ev)] += ev.scoreChange;
                     lines.push([
                         child.name,
                         dayKey(ev.date),
                         ev.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        ev.type === 'smiley' ? 'Smiley' : 'Grumpy',
+                        modeWordCap(evMode(ev)),
+                        ev.agreementId ? (ev.scoreChange > 0 ? 'Agreement kept' : 'Agreement broken') : (ev.type === 'smiley' ? 'Smiley' : 'Grumpy'),
                         resolveReason(ev.type, ev.reason),
                         ev.scoreChange,
-                        running
+                        run.goodwill,
+                        run.trust
                     ].map(csvCell).join(','));
                 });
             });
@@ -3142,8 +3663,11 @@
         });
         document.getElementById('close-report-btn').addEventListener('click', closeReport);
         reportChildSelect.addEventListener('change', () => { reportChildId = Number(reportChildSelect.value); renderReport(); });
-        document.querySelectorAll('.report-period').forEach(btn => {
+        document.querySelectorAll('#report-periods .report-period').forEach(btn => {
             btn.addEventListener('click', () => { reportDays = Number(btn.dataset.days); renderReport(); });
+        });
+        document.querySelectorAll('.report-mode').forEach(btn => {
+            btn.addEventListener('click', () => { reportMode = btn.dataset.mode; renderReport(); });
         });
         document.getElementById('export-child-btn').addEventListener('click', () => {
             const child = state.children[reportChildId];
@@ -3176,7 +3700,8 @@
                         id: newId,
                         name: name,
                         requirement: requirement,
-                        color: newColor
+                        color: newColor,
+                        mode: chartMode
                     });
                 }
 
@@ -3211,8 +3736,9 @@
 
         // Make sure a behaviour is on the list (with its colour), without
         // counting a use. Returns its history entry.
-        function ensureBehaviour(reason, type) {
-            let note = state.noteHistory.find(n => n.reason === reason && n.type === type);
+        function ensureBehaviour(reason, type, mode) {
+            mode = mode || chartMode;
+            let note = state.noteHistory.find(n => n.reason === reason && n.type === type && evMode(n) === mode);
             if (!note) {
                 // Assign a color if this is a new note, drawn from the type's gradient
                 if (!state.noteColors[reason]) {
@@ -3220,18 +3746,20 @@
                     const sameTypeCount = state.noteHistory.filter(n => n.type === type).length;
                     state.noteColors[reason] = colorArray[sameTypeCount % colorArray.length];
                 }
-                note = { reason: reason, type: type, count: 0 };
+                note = { reason: reason, type: type, count: 0, mode: mode };
                 state.noteHistory.push(note);
             }
             return note;
         }
 
         // Add note to history
-        function addToNoteHistory(reason, type) {
-            ensureBehaviour(reason, type).count++;
+        function addToNoteHistory(reason, type, mode) {
+            const note = ensureBehaviour(reason, type, mode);
+            note.count++;
 
             // Sort by count (most frequent first)
             state.noteHistory.sort((a, b) => b.count - a.count);
+            return note;
         }
 
         // Remove a behaviour from the list. Events already logged with it
@@ -3252,6 +3780,8 @@
 
         function openBehaviourModal() {
             behaviourInput.value = '';
+            behaviourTypeSmiley.textContent = `🙂 Builds ${modeWord(chartMode)}`;
+            behaviourTypeGrumpy.textContent = `☹️ Loses ${modeWord(chartMode)}`;
             setBehaviourModalType('smiley');
             behaviourModal.style.display = 'flex';
         }
@@ -3270,8 +3800,8 @@
         function renderBehaviourSuggestions() {
             behaviourSuggestions.innerHTML = '';
             const key = behaviourModalType === 'smiley' ? 'build' : 'lose';
-            const onList = new Set(state.noteHistory.filter(n => n.type === behaviourModalType).map(n => n.reason));
-            BEHAVIOUR_SUGGESTIONS.forEach(group => {
+            const onList = new Set(state.noteHistory.filter(n => n.type === behaviourModalType && evMode(n) === chartMode).map(n => n.reason));
+            suggestionsFor(chartMode).forEach(group => {
                 const title = document.createElement('div');
                 title.className = 'suggestion-group-title';
                 title.textContent = group.age;
@@ -3306,7 +3836,7 @@
                 behaviourInput.focus();
                 return;
             }
-            ensureBehaviour(reason, behaviourModalType);
+            ensureBehaviour(reason, behaviourModalType, chartMode);
             scheduleSave();
             updateQuickNotes();
             closeBehaviourModal();
@@ -3323,10 +3853,11 @@
         function updateQuickNotes() {
             quickNotesList.innerHTML = '';
 
-            state.noteHistory.forEach(note => {
+            state.noteHistory.filter(n => evMode(n) === chartMode).forEach(note => {
                 const noteElement = document.createElement('button');
                 noteElement.className = 'quick-note';
-                noteElement.textContent = `${behaviourEmoji(note.type)} ${note.reason}`;
+                noteElement.textContent = `${behaviourEmoji(note.type)} ${note.reason}${note.both ? (chartMode === 'trust' ? ' +🙂' : ' +🤝') : ''}`;
+                if (note.both) noteElement.title = `Also counts for ${modeWord(otherMode(chartMode))}. Double-click to rename`;
                 noteElement.title = 'Double-click to rename';
                 noteElement.style.backgroundColor = state.noteColors[note.reason];
                 noteElement.style.color = getContrastColor(state.noteColors[note.reason]);
@@ -3431,7 +3962,7 @@
                 return;
             }
 
-            const collision = state.noteHistory.find(n => n !== note && n.reason === newReason && n.type === note.type);
+            const collision = state.noteHistory.find(n => n !== note && n.reason === newReason && n.type === note.type && evMode(n) === evMode(note));
             if (collision) {
                 collision.count += note.count;
                 state.noteHistory = state.noteHistory.filter(n => n !== note);
@@ -3457,11 +3988,7 @@
         function updateModalQuickNotes() {
             modalQuickNotes.innerHTML = '';
 
-            if (state.noteHistory.length === 0) {
-                return;
-            }
-
-            state.noteHistory.forEach(note => {
+            state.noteHistory.filter(n => evMode(n) === chartMode && n.type === state.currentType).forEach(note => {
                 const noteElement = document.createElement('button');
                 noteElement.className = 'quick-note';
                 noteElement.textContent = `${behaviourEmoji(note.type)} ${note.reason}`;
@@ -3470,6 +3997,7 @@
                 noteElement.style.borderColor = state.noteColors[note.reason];
                 noteElement.addEventListener('click', () => {
                     noteInput.value = note.reason;
+                    applyAlsoFromBehaviour();
                 });
 
                 modalQuickNotes.appendChild(noteElement);
@@ -3619,9 +4147,11 @@
 
         // Update chart with current child's data
         function updateChart(keepScroll) {
-            const events = state.children[state.currentChild].events;
+            const child = state.children[state.currentChild];
+            const events = child.events;
             const spacing = cellSize();
-            const pointCount = events.length + 1; // +1 for the starting zero point
+            const { cols, count: columnCount } = eventColumns(events);
+            const pointCount = columnCount + 1; // +1 for the starting zero point
 
             // Total categories is at least enough to fill the visible width
             // (so the grid/prize lines fill the frame from the start) and at
@@ -3642,8 +4172,18 @@
             let cumulativeScore = 0;
             data[0] = 0;
             events.forEach((event, idx) => {
+                if (evMode(event) !== chartMode) return;
                 cumulativeScore += event.scoreChange;
-                data[idx + 1] = cumulativeScore;
+                data[cols[idx]] = cumulativeScore;
+            });
+
+            // Scores on the Goodwill | Trust switch
+            document.getElementById('mode-score-goodwill').textContent = modeScore(child, 'goodwill');
+            document.getElementById('mode-score-trust').textContent = modeScore(child, 'trust');
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                const on = b.dataset.mode === chartMode;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', on ? 'true' : 'false');
             });
 
             state.chart.data.labels = labels;
@@ -3840,9 +4380,10 @@
 
             lastPointCenter = null;
             if (events.length === 0) {
-                updateConnectorLine([]);
+                updateConnectorLine([], []);
                 return;
             }
+            const { cols } = eventColumns(events);
 
             const chart = state.chart;
             const yScale = chart.scales.y;
@@ -3859,9 +4400,19 @@
             const maxY = chartWrapper.offsetHeight - halfPoint;
 
             let cumulativeScore = 0;
+            let otherScore = 0;
             const centers = [];
+            const faint = [];
 
             events.forEach((event, idx) => {
+                const colX = Math.min(Math.max(xPixel(cols[idx]) + POINT_OFFSET_X * gridZoom, halfPoint), maxX);
+                if (evMode(event) !== chartMode) {
+                    // The other mode: just a faint line, no faces.
+                    otherScore += event.scoreChange;
+                    let fy = yPixel(Math.max(Y_MIN, Math.min(Y_MAX, otherScore))) + POINT_OFFSET_Y * gridZoom;
+                    faint.push({ x: colX, y: Math.min(Math.max(fy, halfPoint), maxY) });
+                    return;
+                }
                 const prevScore = cumulativeScore;
                 cumulativeScore += event.scoreChange;
 
@@ -3871,7 +4422,7 @@
                 // score just before this event up to the score just after.
                 const direction = event.scoreChange >= 0 ? 1 : -1;
                 const magnitude = Math.max(1, Math.abs(event.scoreChange));
-                const x = Math.min(Math.max(xPixel(idx + 1) + POINT_OFFSET_X * gridZoom, halfPoint), maxX);
+                const x = colX;
 
                 for (let step = 1; step <= magnitude; step++) {
                     const stepValue = prevScore + direction * step;
@@ -3881,7 +4432,7 @@
                     centers.push({ x, y });
 
                     const point = document.createElement('div');
-                    point.className = 'chart-point';
+                    point.className = 'chart-point' + (chartMode === 'trust' ? ' trust' : '');
                     point.style.width = `${pointSize}px`;
                     point.style.height = `${pointSize}px`;
                     point.style.fontSize = `${Math.round(pointSize * 0.63)}px`;
@@ -3889,7 +4440,9 @@
                     point.textContent = event.type === 'smiley' ? '🙂' : '☹️';
                     point.style.left = `${x}px`;
                     point.style.top = `${y}px`;
-                    point.style.backgroundColor = state.noteColors[resolveReason(event.type, event.reason)] || '#cccccc';
+                    point.style.backgroundColor = event.agreementId
+                        ? (event.type === 'smiley' ? '#81C784' : '#E57373')
+                        : (state.noteColors[resolveReason(event.type, event.reason)] || '#cccccc');
                     point.addEventListener('click', () => viewEventDetails(event));
 
                     chartWrapper.appendChild(point);
@@ -3899,20 +4452,32 @@
             // Draw the connecting line through the markers' actual centers
             // (not the chart's raw un-offset values) so it visually touches
             // every emoji, including the fine-tune offset applied above.
-            updateConnectorLine(centers);
+            updateConnectorLine(centers, faint);
             lastPointCenter = centers[centers.length - 1] || null;
         }
 
         // Render a polyline through the given {x, y} pixel centers, linking
         // each new emoji to the one before it.
-        function updateConnectorLine(points) {
+        function updateConnectorLine(points, faint) {
             const svg = document.getElementById('connector-svg');
             if (!svg) return;
 
             svg.innerHTML = '';
+            const ns = 'http://www.w3.org/2000/svg';
+            // The other mode's line, faint and dashed, behind the main one.
+            if (faint && faint.length >= 2) {
+                const f = document.createElementNS(ns, 'polyline');
+                f.setAttribute('points', faint.map(p => `${p.x},${p.y}`).join(' '));
+                f.setAttribute('fill', 'none');
+                f.setAttribute('stroke', chartMode === 'trust' ? 'rgba(253, 216, 53, 0.75)' : 'rgba(144, 202, 249, 0.6)');
+                f.setAttribute('stroke-width', '2.5');
+                f.setAttribute('stroke-dasharray', '6 5');
+                f.setAttribute('stroke-linecap', 'round');
+                f.setAttribute('stroke-linejoin', 'round');
+                svg.appendChild(f);
+            }
             if (points.length < 2) return;
 
-            const ns = 'http://www.w3.org/2000/svg';
             const polyline = document.createElementNS(ns, 'polyline');
             polyline.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
             polyline.setAttribute('fill', 'none');
@@ -3932,7 +4497,7 @@
             const chart = state.chart;
             const yScale = chart.scales.y;
 
-            state.prizes.forEach(prize => {
+            state.prizes.filter(p => evMode(p) === chartMode).forEach(prize => {
                 const y = yPixel(Math.max(Y_MIN, Math.min(Y_MAX, prize.requirement)));
 
                 const line = document.createElement('div');
@@ -3995,13 +4560,14 @@
         // Update prizes display
         function updatePrizesDisplay() {
             prizesContainer.innerHTML = '';
-            const currentGoodwill = state.children[state.currentChild].score;
+            const currentGoodwill = modeScore(state.children[state.currentChild], chartMode);
+            const modePrizes = state.prizes.filter(p => evMode(p) === chartMode);
 
             // Nothing to show (and no strip of empty padding) until the
             // first prize is created.
-            prizesSection.style.display = state.prizes.length ? '' : 'none';
+            prizesSection.style.display = modePrizes.length ? '' : 'none';
 
-            state.prizes.forEach(prize => {
+            modePrizes.forEach(prize => {
                 const prizeElement = document.createElement('div');
                 prizeElement.className = 'prize-item';
                 prizeElement.style.borderLeftColor = prize.color;
@@ -4015,7 +4581,7 @@
                         <div class="prize-progress-bar" style="width: ${progressPercent}%"></div>
                         <div class="prize-progress-marker" style="left: ${Math.min(Math.max((prize.requirement / Y_MAX) * 100, 0), 100)}%"></div>
                     </div>
-                    <div class="prize-icon">🎁</div>
+                    <div class="prize-icon">${chartMode === 'trust' ? '🔓' : '🎁'}</div>
                 `;
 
                 prizesContainer.appendChild(prizeElement);
@@ -4029,6 +4595,7 @@
             });
 
             renderChildDashboard();
+            renderAgreements();
             keepAppOnScreen();
         }
 
